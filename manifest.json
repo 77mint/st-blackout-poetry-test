@@ -1,0 +1,12 @@
+{
+    "display_name": "剪报拼贴诗-测试版",
+    "loading_order": 100,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "",
+    "author": "77mint",
+    "version": "2.0.0-test",
+    "homePage": "https://github.com/77mint/st-blackout-poetry-test",
+    "auto_update": true
+}
