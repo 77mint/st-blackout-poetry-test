@@ -20,7 +20,6 @@ jQuery(async () => {
     var FONT_HREF = 'https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600&display=swap';
     var fl = document.createElement('link'); fl.href = FONT_HREF; fl.rel = 'stylesheet'; document.head.appendChild(fl);
 
-    // ===== IndexedDB 字体持久化 =====
     var customFonts = [];
     var BP_DB_NAME = 'bp-blackout-poetry', BP_DB_STORE = 'appdata', BP_DB_VERSION = 1;
     function openBpDB(){ return new Promise(function(resolve,reject){ var req=indexedDB.open(BP_DB_NAME,BP_DB_VERSION); req.onupgradeneeded=function(e){ var db=e.target.result; if(!db.objectStoreNames.contains(BP_DB_STORE))db.createObjectStore(BP_DB_STORE); }; req.onsuccess=function(e){resolve(e.target.result);}; req.onerror=function(e){reject(e.target.error);}; }); }
@@ -39,6 +38,7 @@ jQuery(async () => {
     var customSymbol = '';
     var customShapeDataUrl = null;
 
+    // 【修正】所有 clip-path 基于正方形重新绘制
     var SHAPE_CLIPS = {
         'default': '',
         'square': 'inset(0)',
@@ -46,16 +46,17 @@ jQuery(async () => {
         'star5': 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)',
         'star4': 'polygon(50% 0%,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0% 50%,38% 38%)',
         'star8': 'polygon(50% 0%,57% 28%,79% 10%,72% 37%,100% 37%,78% 50%,100% 63%,72% 63%,79% 90%,57% 72%,50% 100%,43% 72%,21% 90%,28% 63%,0% 63%,22% 50%,0% 37%,28% 37%,21% 10%,43% 28%)',
-        'raindrop': 'polygon(50% 0%,85% 45%,85% 65%,70% 88%,50% 100%,30% 88%,15% 65%,15% 45%)'
+        // 【修正】雨滴：上尖下圆的真正水滴形
+        'raindrop': 'polygon(50% 0%,57% 12%,70% 32%,82% 52%,85% 62%,85% 72%,80% 82%,70% 92%,58% 98%,50% 100%,42% 98%,30% 92%,20% 82%,15% 72%,15% 62%,18% 52%,30% 32%,43% 12%)'
     };
+    // 【修正】拼图：真正有凸起和凹陷的拼图块
     var PUZZLE_VARIANTS = [
-        'polygon(0% 0%,100% 0%,100% 35%,85% 35%,85% 50%,100% 50%,100% 100%,0% 100%,0% 65%,15% 65%,15% 50%,0% 50%)',
-        'polygon(0% 0%,50% 0%,50% 15%,65% 15%,65% 0%,100% 0%,100% 100%,65% 100%,65% 85%,50% 85%,50% 100%,0% 100%)',
-        'polygon(0% 0%,100% 0%,100% 50%,85% 50%,85% 65%,100% 65%,100% 100%,0% 100%,0% 65%,15% 65%,15% 35%,0% 35%)',
-        'polygon(0% 0%,35% 0%,35% 15%,65% 15%,65% 0%,100% 0%,100% 100%,50% 100%,50% 85%,35% 85%,35% 100%,0% 100%)'
+        'polygon(0% 0%,40% 0%,40% 8%,35% 12%,35% 20%,40% 24%,40% 0%,60% 0%,60% 8%,65% 12%,65% 20%,60% 24%,60% 0%,100% 0%,100% 40%,92% 40%,88% 35%,80% 35%,76% 40%,100% 40%,100% 100%,0% 100%,0% 60%,8% 60%,12% 65%,20% 65%,24% 60%,0% 60%,0% 0%)',
+        'polygon(0% 0%,100% 0%,100% 40%,92% 40%,88% 45%,88% 55%,92% 60%,100% 60%,100% 100%,60% 100%,60% 92%,55% 88%,45% 88%,40% 92%,40% 100%,0% 100%,0% 0%)',
+        'polygon(0% 0%,100% 0%,100% 100%,60% 100%,60% 92%,65% 88%,65% 80%,60% 76%,40% 76%,35% 80%,35% 88%,40% 92%,40% 100%,0% 100%,0% 60%,8% 60%,12% 55%,12% 45%,8% 40%,0% 40%)',
+        'polygon(0% 0%,40% 0%,40% 8%,45% 12%,55% 12%,60% 8%,60% 0%,100% 0%,100% 40%,92% 40%,88% 45%,88% 55%,92% 60%,100% 60%,100% 100%,0% 100%,0% 0%)'
     ];
     function getRandomPuzzleClip(){ return PUZZLE_VARIANTS[Math.floor(Math.random()*PUZZLE_VARIANTS.length)]; }
-
     function getClipForShape(shape){
         if(shape==='puzzle') return getRandomPuzzleClip();
         return SHAPE_CLIPS[shape]||'';
@@ -74,16 +75,15 @@ jQuery(async () => {
 }
 #bp-app-container, #bp-app-container *, #bp-app-container *::before, #bp-app-container *::after { box-sizing:border-box; margin:0; padding:0; user-select:none; -webkit-user-select:none; }
 #bp-app-container input[type="file"], #bp-app-container input[type="color"], #bp-app-container input[type="text"], #bp-app-container input[type="checkbox"], #bp-app-container input[type="range"], #bp-app-container select, #bp-app-container textarea { user-select:auto !important; -webkit-user-select:auto !important; pointer-events:auto !important; -webkit-tap-highlight-color:transparent; }
-#bp-app-container #top-left-bar { position:fixed; top:20px; left:20px; display:flex; align-items:center; gap:8px; z-index:2005; }
-#bp-app-container #top-right-bar { position:fixed; top:20px; right:20px; display:flex; align-items:center; gap:8px; z-index:2005; }
-#bp-app-container .icon-btn { width:36px; height:36px; display:flex; justify-content:center; align-items:center; cursor:pointer; background:rgba(255,255,255,0.92); border:1px solid rgba(0,0,0,0.08); border-radius:4px; backdrop-filter:blur(8px); box-shadow:0 4px 15px rgba(0,0,0,0.04); transition:all 0.2s ease; }
+
+/* 【修正】灵动岛安全区适配 */
+#bp-app-container #top-left-bar { position:fixed; top:calc(env(safe-area-inset-top, 0px) + 14px); left:14px; display:flex; align-items:center; gap:6px; z-index:2005; }
+#bp-app-container #top-right-bar { position:fixed; top:calc(env(safe-area-inset-top, 0px) + 14px); right:14px; display:flex; align-items:center; gap:6px; z-index:2005; }
+
+#bp-app-container .icon-btn { width:34px; height:34px; display:flex; justify-content:center; align-items:center; cursor:pointer; background:rgba(255,255,255,0.92); border:1px solid rgba(0,0,0,0.08); border-radius:4px; backdrop-filter:blur(8px); box-shadow:0 4px 15px rgba(0,0,0,0.04); transition:all 0.2s ease; }
 #bp-app-container .icon-btn:hover { background:#FFF; border-color:#000; }
-#bp-app-container .icon-btn svg { width:18px; height:18px; stroke:#1C1C1C; stroke-width:1.6; fill:none; }
-#bp-app-container #menu-trigger .bar { width:16px; height:1.5px; background-color:#1C1C1C; }
-#bp-app-container .layout-toggle-group { display:flex; background:rgba(255,255,255,0.92); border:1px solid rgba(0,0,0,0.08); border-radius:4px; backdrop-filter:blur(8px); padding:2px; box-shadow:0 4px 15px rgba(0,0,0,0.04); }
-#bp-app-container .layout-btn { background:transparent; border:none; color:#666; font-size:11px; padding:6px 12px; border-radius:2px; cursor:pointer; transition:all 0.15s; }
-#bp-app-container .layout-btn:hover { color:#000; }
-#bp-app-container .layout-btn.active { background:#1C1C1C; color:#FFF; font-weight:500; }
+#bp-app-container .icon-btn svg { width:16px; height:16px; stroke:#1C1C1C; stroke-width:1.6; fill:none; }
+#bp-app-container #menu-trigger .bar { width:14px; height:1.5px; background-color:#1C1C1C; }
 #bp-app-container #common-mask { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.18); z-index:1998; display:none; opacity:0; transition:opacity 0.25s ease; }
 #bp-app-container #common-mask.visible { display:block; opacity:1; }
 #bp-app-container #drawer { position:fixed; top:0; left:-370px; width:350px; height:100vh; background:rgba(255,255,255,0.98); border-right:1px solid rgba(0,0,0,0.08); backdrop-filter:blur(20px); box-shadow:10px 0 35px rgba(0,0,0,0.04); z-index:1999; display:flex; flex-direction:column; padding:75px 20px 30px 20px; overflow-y:auto; transition:left 0.3s cubic-bezier(0.22,1,0.36,1); color:#222; font-size:11.5px; }
@@ -128,7 +128,8 @@ jQuery(async () => {
 #bp-app-container .char-node { cursor:pointer; position:relative; display:inline-block; transition:transform 0.1s ease; }
 #bp-app-container .char-node:hover:not(.is-cut) { opacity:0.5; }
 #bp-app-container .char-node.is-cut { color:transparent !important; }
-#bp-app-container .char-node.is-cut::after { content:""; position:absolute; top:2px; bottom:2px; left:0; right:0; background-color:var(--top-cut-color); border-radius:1px; box-shadow:inset 0 0 1px rgba(0,0,0,0.15); }
+/* 【修正】原文区坑强制正方形 */
+#bp-app-container .char-node.is-cut::after { content:""; position:absolute; top:50%; left:50%; width:1em; height:1em; transform:translate(-50%,-50%); background-color:var(--top-cut-color); border-radius:1px; box-shadow:inset 0 0 1px rgba(0,0,0,0.15); }
 #bp-app-container .char-node.is-cut.shape-symbol::after { content:attr(data-symbol); background:transparent !important; box-shadow:none !important; display:flex; align-items:center; justify-content:center; color:var(--top-cut-color); font-size:0.85em; opacity:0.7; border-radius:0; }
 #bp-app-container .char-node.is-cut.shape-image::after { -webkit-mask-image:var(--cut-mask); mask-image:var(--cut-mask); -webkit-mask-size:contain; mask-size:contain; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center; border-radius:0; }
 #bp-app-container #collage-area { position:relative; background-color:var(--bottom-bg); background-image:var(--bottom-bg-img); background-size:cover; background-position:center; border-top:1px solid rgba(0,0,0,0.04); flex-shrink:0; min-height:180px; min-width:180px; overflow:hidden; font-family:var(--scrap-font-family); padding-bottom:35px; }
@@ -140,7 +141,8 @@ jQuery(async () => {
 #bp-app-container #poster-canvas:not(.layout-horizontal) #collage-resizer::after { content:""; width:32px; height:3px; background:rgba(0,0,0,0.2); border-radius:2px; }
 #bp-app-container #poster-canvas.layout-horizontal #collage-resizer { right:0; top:0; width:12px; height:100%; cursor:ew-resize; }
 #bp-app-container #poster-canvas.layout-horizontal #collage-resizer::after { content:""; width:3px; height:32px; background:rgba(0,0,0,0.2); border-radius:2px; }
-#bp-app-container .scrap-word { position:absolute; background-color:var(--scrap-bg); color:var(--shared-text-color); padding:3px 6px; font-size:var(--scrap-font-size); line-height:1; border-radius:1px; cursor:grab; box-shadow:1px 2px 5px rgba(0,0,0,0.15); font-family:inherit; touch-action:none; z-index:10; display:inline-flex; justify-content:center; align-items:center; width:26px; height:30px; }
+/* 【修正】字块改成正方形 28x28 */
+#bp-app-container .scrap-word { position:absolute; background-color:var(--scrap-bg); color:var(--shared-text-color); padding:0; font-size:var(--scrap-font-size); line-height:28px; border-radius:1px; cursor:grab; box-shadow:1px 2px 5px rgba(0,0,0,0.15); font-family:inherit; touch-action:none; z-index:10; display:inline-flex; justify-content:center; align-items:center; width:28px; height:28px; text-align:center; }
 #bp-app-container .scrap-word:active { cursor:grabbing; box-shadow:2px 6px 14px rgba(0,0,0,0.25); z-index:100; }
 #bp-app-container .texture-layer { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; mix-blend-mode:overlay; z-index:800; }
 #bp-app-container #top-texture { opacity:var(--top-grain-opacity); }
@@ -148,9 +150,10 @@ jQuery(async () => {
 #bp-app-container #poster-bottom-meta { position:absolute; bottom:12px; left:0; width:100%; display:flex; justify-content:center; align-items:center; gap:8px; font-size:8.5px; letter-spacing:0.1em; color:var(--shared-text-color); opacity:0.45; pointer-events:none; }
 #bp-app-container #bottom-icon-slot { display:inline-flex; align-items:center; justify-content:center; }
 #bp-app-container #bottom-icon-slot img { width:11px; height:11px; object-fit:cover; vertical-align:middle; border-radius:50%; }
-#bp-app-container #shape-panel { position:fixed; top:62px; left:20px; width:220px; background:rgba(255,255,255,0.98); border:1px solid rgba(0,0,0,0.08); border-radius:6px; backdrop-filter:blur(20px); box-shadow:0 8px 30px rgba(0,0,0,0.08); z-index:2006; padding:12px; display:none; color:#222; font-size:11px; }
-#bp-app-container #shape-panel.open { display:block; }
-#bp-app-container .shape-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:10px; }
+/* 浮层面板通用 */
+#bp-app-container .bp-float-panel { position:fixed; top:calc(env(safe-area-inset-top, 0px) + 52px); left:14px; width:220px; background:rgba(255,255,255,0.98); border:1px solid rgba(0,0,0,0.08); border-radius:6px; backdrop-filter:blur(20px); box-shadow:0 8px 30px rgba(0,0,0,0.08); z-index:2006; padding:10px; display:none; color:#222; font-size:11px; }
+#bp-app-container .bp-float-panel.open { display:block; }
+#bp-app-container .shape-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:8px; }
 #bp-app-container .shape-item { width:100%; aspect-ratio:1; background:#F4F4F4; border:1.5px solid transparent; border-radius:4px; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; transition:all 0.15s; }
 #bp-app-container .shape-item:hover { border-color:#999; }
 #bp-app-container .shape-item.active { border-color:#1C1C1C; background:#E8E8E8; }
@@ -158,6 +161,9 @@ jQuery(async () => {
 #bp-app-container .shape-item .shape-label { font-size:7px; color:#888; line-height:1; }
 #bp-app-container .shape-extra { border-top:1px solid rgba(0,0,0,0.06); padding-top:8px; margin-top:4px; }
 #bp-app-container .shape-extra .setting-toggle-row { font-size:10px; }
+/* 【新增】布局面板 */
+#bp-app-container .layout-grid { display:flex; gap:6px; }
+#bp-app-container .layout-grid .action-chip { flex:1; padding:8px 4px; font-size:10px; }
 #bp-bubble-btn { position:fixed; right:12px; top:50%; transform:translateY(-50%); background:transparent; border:none; box-shadow:none; z-index:9990; display:flex; justify-content:center; align-items:center; cursor:pointer; font-size:26px; line-height:1; padding:0; transition:transform 0.15s ease, opacity 0.15s ease; opacity:0.85; -webkit-tap-highlight-color:transparent; }
 #bp-bubble-btn:active { transform:translateY(-50%) scale(0.9); opacity:1; }
 #bp-sel-popup { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); z-index:99999; background:rgba(28,28,28,0.92); color:#fff; padding:8px 16px; border-radius:20px; box-shadow:0 4px 12px rgba(0,0,0,0.2); font-size:12px; display:none; align-items:center; gap:6px; cursor:pointer; backdrop-filter:blur(6px); }
@@ -167,16 +173,20 @@ jQuery(async () => {
     `;
     var css = document.createElement('style'); css.textContent = CSS_TEXT; document.head.appendChild(css);
 
-    // ===== 形状面板 SVG 图标 =====
+    // 动态 clip-path CSS
+    var dynStyle = document.createElement('style');
+    dynStyle.textContent = '#bp-app-container .char-node.is-cut:not(.shape-symbol):not(.shape-image)::after { clip-path: var(--cut-clip, none); -webkit-clip-path: var(--cut-clip, none); }';
+    document.head.appendChild(dynStyle);
+
     var SHAPE_SVGS = {
-        'default': '<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1" fill="#333"/></svg>',
+        'default': '<svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1" fill="#333"/></svg>',
         'square': '<svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" fill="#333"/></svg>',
         'circle': '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#333"/></svg>',
         'star5': '<svg viewBox="0 0 16 16"><polygon points="8,1 10,6 15.5,6 11,9.5 12.5,15 8,11.5 3.5,15 5,9.5 0.5,6 6,6" fill="#333"/></svg>',
         'star4': '<svg viewBox="0 0 16 16"><polygon points="8,0 10,6 16,8 10,10 8,16 6,10 0,8 6,6" fill="#333"/></svg>',
         'star8': '<svg viewBox="0 0 16 16"><polygon points="8,0 9.2,4.5 12.6,1.6 11.5,6.2 16,6 12.4,8 16,10 11.5,9.8 12.6,14.4 9.2,11.5 8,16 6.8,11.5 3.4,14.4 4.5,9.8 0,10 3.6,8 0,6 4.5,6.2 3.4,1.6 6.8,4.5" fill="#333"/></svg>',
-        'raindrop': '<svg viewBox="0 0 16 16"><path d="M8,1 C8,1 14,7 14,10.5 C14,13.5 11.3,16 8,16 C4.7,16 2,13.5 2,10.5 C2,7 8,1 8,1Z" fill="#333"/></svg>',
-        'puzzle': '<svg viewBox="0 0 16 16"><path d="M1,1 H6 V4 C6,4 5,4 5,5.5 C5,7 6,7 6,7 V10 H1 Z M7,1 H11 V3 C11,3 12,3 12,4.5 C12,6 11,6 11,6 V10 H7 V7 C7,7 8,7 8,5.5 C8,4 7,4 7,4 Z" fill="#333"/></svg>',
+        'raindrop': '<svg viewBox="0 0 16 16"><path d="M8,1 C8,1 13.5,7.5 13.5,10.5 C13.5,13.5 11,16 8,16 C5,16 2.5,13.5 2.5,10.5 C2.5,7.5 8,1 8,1Z" fill="#333"/></svg>',
+        'puzzle': '<svg viewBox="0 0 16 16"><path d="M1,1 H6 V3.5 Q5,3.5 5,5 Q5,6.5 6,6.5 V10 H1Z M7,1 H11 V3 Q12,3 12,4.5 Q12,6 11,6 V10 H7 V6.5 Q8,6.5 8,5 Q8,3.5 7,3.5Z" fill="#333"/></svg>',
         'symbol': '<svg viewBox="0 0 16 16"><text x="8" y="12" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">A</text></svg>',
         'image': '<svg viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="10" rx="1" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="5" cy="7" r="1.5" fill="#333"/><polyline points="1,13 6,8 9,11 11,9 15,13" fill="none" stroke="#333" stroke-width="1"/></svg>'
     };
@@ -193,129 +203,29 @@ jQuery(async () => {
     </defs></svg>
     <div id="top-left-bar">
         <div class="icon-btn" onclick="closeBpApp()" title="退出"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
-        <div class="icon-btn" id="menu-trigger" onclick="toggleDrawer()" title="工具栏"><div style="display:flex;flex-direction:column;gap:4px;align-items:center;"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>
+        <div class="icon-btn" id="menu-trigger" onclick="toggleDrawer()" title="工具栏"><div style="display:flex;flex-direction:column;gap:3px;align-items:center;"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>
+        <div class="icon-btn" id="layout-trigger" onclick="toggleLayoutPanel()" title="布局"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="7.5" rx="1.5" stroke="#1C1C1C" stroke-width="1.6"/><rect x="3" y="13.5" width="18" height="7.5" rx="1.5" stroke="#1C1C1C" stroke-width="1.6"/></svg></div>
         <div class="icon-btn" id="shape-trigger" onclick="toggleShapePanel()" title="抠字形状"><svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1C" stroke-width="1.6"><polygon points="12,2 15,9 22,9 16.5,13.5 18.5,21 12,16.5 5.5,21 7.5,13.5 2,9 9,9" fill="none"/></svg></div>
-        <div class="layout-toggle-group">
-            <button class="layout-btn active" id="btn-layout-vertical" onclick="switchLayout('vertical')">上下</button>
-            <button class="layout-btn" id="btn-layout-horizontal" onclick="switchLayout('horizontal')">左右</button>
-            <button class="layout-btn" onclick="swapAreas()">交换</button>
-        </div>
     </div>
     <div id="top-right-bar">
         <div class="icon-btn" onclick="toggleSettingsDrawer()" title="设置"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
         <div class="icon-btn" onclick="exportPosterImage()" title="保存"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
     </div>
-    <div id="shape-panel"></div>
+    <div id="layout-panel" class="bp-float-panel"></div>
+    <div id="shape-panel" class="bp-float-panel"></div>
     <div id="common-mask" onclick="closeAllDrawers()"></div>
-    <div id="drawer"><!-- 工具抽屉内容省略，和上版完全一样 --></div>
-    <div id="settings-drawer"><!-- 设置抽屉内容省略，和上版完全一样 --></div>
+    <div id="drawer"></div>
+    <div id="settings-drawer"></div>
     <div id="poster-canvas">
         <div id="source-area"><div class="text-flow" id="textFlow"></div><div class="texture-layer" id="top-texture" style="background:none;"></div></div>
         <div id="collage-area"><div class="texture-layer" id="bottom-texture" style="background:none;"></div><div id="poster-bottom-meta"><span id="bottom-icon-slot"></span><span id="bottom-time-span"></span><span id="bottom-wm-span">SillyTavern</span></div><div id="collage-resizer" title="按住拉伸拼贴区"></div></div>
     </div>
     `;
-
-    // 把抽屉内容填进去（和上版完全一样的 drawer / settings-drawer innerHTML）
-    container.querySelector('#drawer').innerHTML = `
-        <div class="drawer-section"><div class="section-title">1. 壁纸 (原文区)</div><div id="topPaletteContainer"></div><div class="color-picker-wrapper"><input type="color" class="color-picker-input" id="topColorPicker" value="#F7F5F0" onchange="setTopCustomBg(this.value)"><span style="font-size:10px;color:#555;">自定义取色</span></div><label class="action-chip file-label">上传壁纸图片<input type="file" accept="image/*" onchange="uploadTopBg(event)"></label><div style="font-size:9px;color:#888;margin-top:8px;margin-bottom:3px;">纹理质感：</div><div class="grid-buttons"><button class="action-chip active" id="top-tex-none" onclick="setTopTexture('none')">无</button><button class="action-chip" id="top-tex-frosted" onclick="setTopTexture('frosted')">细磨砂</button><button class="action-chip" id="top-tex-noise" onclick="setTopTexture('noise')">胶片噪点</button><button class="action-chip" id="top-tex-paper" onclick="setTopTexture('paper')">粗糙纸纹</button><button class="action-chip" id="top-tex-fabric" onclick="setTopTexture('fabric')">复古布纹</button><button class="action-chip" id="top-tex-scratch" onclick="setTopTexture('scratch')">素描排线</button></div><div class="slider-row"><span>纹理浓度</span><input type="range" min="0" max="70" value="0" id="top-grain-slider" oninput="setTopGrainOpacity(this.value)"></div></div>
-        <div class="drawer-section"><div class="section-title">2. 底图 (拼贴区)</div><div id="bottomPaletteContainer"></div><div class="color-picker-wrapper"><input type="color" class="color-picker-input" id="botColorPicker" value="#F7F5F0" onchange="setBottomCustomBg(this.value)"><span style="font-size:10px;color:#555;">自定义取色</span></div><label class="action-chip file-label">上传底图图片<input type="file" accept="image/*" onchange="uploadBottomBg(event)"></label><button class="action-chip" style="width:100%;margin-top:6px;" onclick="syncCollageSize()">使拼贴区与原文区等大</button><div style="font-size:9px;color:#888;margin-top:8px;margin-bottom:3px;">纹理质感：</div><div class="grid-buttons"><button class="action-chip active" id="bot-tex-none" onclick="setBottomTexture('none')">无</button><button class="action-chip" id="bot-tex-frosted" onclick="setBottomTexture('frosted')">细磨砂</button><button class="action-chip" id="bot-tex-noise" onclick="setBottomTexture('noise')">胶片噪点</button><button class="action-chip" id="bot-tex-paper" onclick="setBottomTexture('paper')">粗糙纸纹</button><button class="action-chip" id="bot-tex-fabric" onclick="setBottomTexture('fabric')">复古布纹</button><button class="action-chip" id="bot-tex-scratch" onclick="setBottomTexture('scratch')">素描排线</button></div><div class="slider-row"><span>纹理浓度</span><input type="range" min="0" max="70" value="0" id="bot-grain-slider" oninput="setBottomGrainOpacity(this.value)"></div></div>
-        <div class="drawer-section"><div class="section-title">3. 字体与颜色</div><div style="font-size:10px;font-weight:600;color:#333;margin-bottom:4px;">文字颜色：</div><div id="textColorPaletteContainer"></div><div class="color-picker-wrapper" style="margin-bottom:10px;"><input type="color" class="color-picker-input" id="textColorPicker" value="#1A1A1A" onchange="setTextColor(this.value)"><span style="font-size:10px;color:#555;">自定义调色</span></div><label class="action-chip file-label" style="background:#EBEBEB;font-weight:600;margin-bottom:6px;">导入本地字体<input type="file" accept=".ttf,.otf,.woff,.woff2" onchange="loadCustomFont(event)"></label><button class="action-chip" style="width:100%;background:#EBEBEB;font-weight:600;margin-bottom:8px;" onclick="openCssFontDialog()">粘贴 CSS 导入在线字体</button><div class="sub-panel-box"><div class="sub-panel-title"><span>原文区字体</span><span id="top-font-name-label" style="font-size:9px;color:#999;font-weight:normal;">跟随酒馆</span></div><div class="font-compact-list" id="topFontList"></div><div class="slider-row"><span>原文字号</span><input type="range" min="11" max="24" value="14" oninput="setTopFontSize(this.value)"></div></div><div class="sub-panel-box" style="margin-top:8px;"><div class="sub-panel-title"><span>拼贴区字体</span><span id="bottom-font-name-label" style="font-size:9px;color:#999;font-weight:normal;">跟随酒馆</span></div><div class="font-compact-list" id="bottomFontList"></div><div class="slider-row"><span>拼贴字号</span><input type="range" min="11" max="24" value="14" oninput="setScrapFontSize(this.value)"></div></div></div>
-        <div class="drawer-section"><div class="section-title">4. 抠字排版</div><div class="grid-buttons"><button class="action-chip" onclick="arrangeStrictGrid(1)">整齐排 1 行</button><button class="action-chip" onclick="arrangeStrictGrid(2)">整齐排 2 行</button><button class="action-chip" style="font-weight:600;border-color:#000;" onclick="arrangeStrictGrid(3)">整齐排 3 行</button></div><div style="font-size:9px;color:#888;margin-top:4px;">按你放的位置排序</div><button class="action-chip" style="width:100%;margin-top:6px;" onclick="resetCuts()">复原全部字</button></div>
-    `;
-    container.querySelector('#settings-drawer').innerHTML = `
-        <div class="drawer-section"><div class="section-title">界面</div><div class="setting-toggle-row"><span>酒馆悬浮按钮</span><input type="checkbox" id="toggle-bubble-cb" onchange="toggleBubbleBtn(this.checked)" style="accent-color:#000;"></div></div>
-        <div class="drawer-section"><div class="section-title">时间与水印</div><div class="setting-toggle-row"><span>显示时间</span><input type="checkbox" id="toggle-time-cb" checked onchange="updateBottomMeta()" style="accent-color:#000;"></div><div style="display:flex;gap:4px;margin-bottom:8px;"><button class="action-chip active" id="btn-time-solar" onclick="setTimeFormat('solar')">公历</button><button class="action-chip" id="btn-time-lunar" onclick="setTimeFormat('lunar')">干支历</button></div><div class="setting-toggle-row" style="margin-top:14px;"><span>显示水印</span><input type="checkbox" id="toggle-watermark-cb" checked onchange="updateBottomMeta()" style="accent-color:#000;"></div><div class="setting-field"><input type="text" class="setting-input" id="watermark-text-input" value="SillyTavern" oninput="updateBottomMeta()"></div></div>
-        <div class="drawer-section"><div class="section-title">标识与图标</div><div class="setting-toggle-row"><span>显示图标</span><input type="checkbox" id="toggle-icon-cb" checked onchange="toggleIconDisplay(this.checked)" style="accent-color:#000;"></div><div style="font-size:9.5px;color:#777;margin-top:8px;margin-bottom:2px;">自定义图标：</div><label class="action-chip file-label">上传图标图片<input type="file" accept="image/*" onchange="uploadCustomIcon(event)"></label><div class="icon-preview-row" id="custom-icon-preview-row" style="display:none;"><div style="display:flex;align-items:center;gap:8px;"><div class="icon-preview-box"><img id="custom-icon-img" src="" alt="preview"></div><span style="font-size:10px;color:#555;" id="custom-icon-name">已加载</span></div><button class="action-chip" style="padding:2px 8px;font-size:9px;" onclick="clearCustomIcon()">恢复默认</button></div></div>
-    `;
+    // 填充抽屉
+    container.querySelector('#drawer').innerHTML = '<div class="drawer-section"><div class="section-title">1. 壁纸 (原文区)</div><div id="topPaletteContainer"></div><div class="color-picker-wrapper"><input type="color" class="color-picker-input" id="topColorPicker" value="#F7F5F0" onchange="setTopCustomBg(this.value)"><span style="font-size:10px;color:#555;">自定义取色</span></div><label class="action-chip file-label">上传壁纸图片<input type="file" accept="image/*" onchange="uploadTopBg(event)"></label><div style="font-size:9px;color:#888;margin-top:8px;margin-bottom:3px;">纹理质感：</div><div class="grid-buttons"><button class="action-chip active" id="top-tex-none" onclick="setTopTexture(\'none\')">无</button><button class="action-chip" id="top-tex-frosted" onclick="setTopTexture(\'frosted\')">细磨砂</button><button class="action-chip" id="top-tex-noise" onclick="setTopTexture(\'noise\')">胶片噪点</button><button class="action-chip" id="top-tex-paper" onclick="setTopTexture(\'paper\')">粗糙纸纹</button><button class="action-chip" id="top-tex-fabric" onclick="setTopTexture(\'fabric\')">复古布纹</button><button class="action-chip" id="top-tex-scratch" onclick="setTopTexture(\'scratch\')">素描排线</button></div><div class="slider-row"><span>纹理浓度</span><input type="range" min="0" max="70" value="0" id="top-grain-slider" oninput="setTopGrainOpacity(this.value)"></div></div><div class="drawer-section"><div class="section-title">2. 底图 (拼贴区)</div><div id="bottomPaletteContainer"></div><div class="color-picker-wrapper"><input type="color" class="color-picker-input" id="botColorPicker" value="#F7F5F0" onchange="setBottomCustomBg(this.value)"><span style="font-size:10px;color:#555;">自定义取色</span></div><label class="action-chip file-label">上传底图图片<input type="file" accept="image/*" onchange="uploadBottomBg(event)"></label><button class="action-chip" style="width:100%;margin-top:6px;" onclick="syncCollageSize()">使拼贴区与原文区等大</button><div style="font-size:9px;color:#888;margin-top:8px;margin-bottom:3px;">纹理质感：</div><div class="grid-buttons"><button class="action-chip active" id="bot-tex-none" onclick="setBottomTexture(\'none\')">无</button><button class="action-chip" id="bot-tex-frosted" onclick="setBottomTexture(\'frosted\')">细磨砂</button><button class="action-chip" id="bot-tex-noise" onclick="setBottomTexture(\'noise\')">胶片噪点</button><button class="action-chip" id="bot-tex-paper" onclick="setBottomTexture(\'paper\')">粗糙纸纹</button><button class="action-chip" id="bot-tex-fabric" onclick="setBottomTexture(\'fabric\')">复古布纹</button><button class="action-chip" id="bot-tex-scratch" onclick="setBottomTexture(\'scratch\')">素描排线</button></div><div class="slider-row"><span>纹理浓度</span><input type="range" min="0" max="70" value="0" id="bot-grain-slider" oninput="setBottomGrainOpacity(this.value)"></div></div><div class="drawer-section"><div class="section-title">3. 字体与颜色</div><div style="font-size:10px;font-weight:600;color:#333;margin-bottom:4px;">文字颜色：</div><div id="textColorPaletteContainer"></div><div class="color-picker-wrapper" style="margin-bottom:10px;"><input type="color" class="color-picker-input" id="textColorPicker" value="#1A1A1A" onchange="setTextColor(this.value)"><span style="font-size:10px;color:#555;">自定义调色</span></div><label class="action-chip file-label" style="background:#EBEBEB;font-weight:600;margin-bottom:6px;">导入本地字体<input type="file" accept=".ttf,.otf,.woff,.woff2" onchange="loadCustomFont(event)"></label><button class="action-chip" style="width:100%;background:#EBEBEB;font-weight:600;margin-bottom:8px;" onclick="openCssFontDialog()">粘贴 CSS 导入在线字体</button><div class="sub-panel-box"><div class="sub-panel-title"><span>原文区字体</span><span id="top-font-name-label" style="font-size:9px;color:#999;font-weight:normal;">跟随酒馆</span></div><div class="font-compact-list" id="topFontList"></div><div class="slider-row"><span>原文字号</span><input type="range" min="11" max="24" value="14" oninput="setTopFontSize(this.value)"></div></div><div class="sub-panel-box" style="margin-top:8px;"><div class="sub-panel-title"><span>拼贴区字体</span><span id="bottom-font-name-label" style="font-size:9px;color:#999;font-weight:normal;">跟随酒馆</span></div><div class="font-compact-list" id="bottomFontList"></div><div class="slider-row"><span>拼贴字号</span><input type="range" min="11" max="24" value="14" oninput="setScrapFontSize(this.value)"></div></div></div><div class="drawer-section"><div class="section-title">4. 抠字排版</div><div class="grid-buttons"><button class="action-chip" onclick="arrangeStrictGrid(1)">整齐排 1 行</button><button class="action-chip" onclick="arrangeStrictGrid(2)">整齐排 2 行</button><button class="action-chip" style="font-weight:600;border-color:#000;" onclick="arrangeStrictGrid(3)">整齐排 3 行</button></div><div style="font-size:9px;color:#888;margin-top:4px;">按你放的位置排序</div><button class="action-chip" style="width:100%;margin-top:6px;" onclick="resetCuts()">复原全部字</button></div>';
+    container.querySelector('#settings-drawer').innerHTML = '<div class="drawer-section"><div class="section-title">界面</div><div class="setting-toggle-row"><span>酒馆悬浮按钮</span><input type="checkbox" id="toggle-bubble-cb" onchange="toggleBubbleBtn(this.checked)" style="accent-color:#000;"></div></div><div class="drawer-section"><div class="section-title">时间与水印</div><div class="setting-toggle-row"><span>显示时间</span><input type="checkbox" id="toggle-time-cb" checked onchange="updateBottomMeta()" style="accent-color:#000;"></div><div style="display:flex;gap:4px;margin-bottom:8px;"><button class="action-chip active" id="btn-time-solar" onclick="setTimeFormat(\'solar\')">公历</button><button class="action-chip" id="btn-time-lunar" onclick="setTimeFormat(\'lunar\')">干支历</button></div><div class="setting-toggle-row" style="margin-top:14px;"><span>显示水印</span><input type="checkbox" id="toggle-watermark-cb" checked onchange="updateBottomMeta()" style="accent-color:#000;"></div><div class="setting-field"><input type="text" class="setting-input" id="watermark-text-input" value="SillyTavern" oninput="updateBottomMeta()"></div></div><div class="drawer-section"><div class="section-title">标识与图标</div><div class="setting-toggle-row"><span>显示图标</span><input type="checkbox" id="toggle-icon-cb" checked onchange="toggleIconDisplay(this.checked)" style="accent-color:#000;"></div><div style="font-size:9.5px;color:#777;margin-top:8px;margin-bottom:2px;">自定义图标：</div><label class="action-chip file-label">上传图标图片<input type="file" accept="image/*" onchange="uploadCustomIcon(event)"></label><div class="icon-preview-row" id="custom-icon-preview-row" style="display:none;"><div style="display:flex;align-items:center;gap:8px;"><div class="icon-preview-box"><img id="custom-icon-img" src="" alt="preview"></div><span style="font-size:10px;color:#555;" id="custom-icon-name">已加载</span></div><button class="action-chip" style="padding:2px 8px;font-size:9px;" onclick="clearCustomIcon()">恢复默认</button></div></div>';
     document.body.appendChild(container);
 
-    // ===== 形状面板渲染 =====
-    function renderShapePanel(){
-        var panel = document.getElementById('shape-panel');
-        var shapes = ['default','square','circle','star5','star4','star8','raindrop','puzzle','symbol','image'];
-        var labels = ['默认','方形','圆形','五角星','四芒星','八芒星','雨滴','拼图','符号','导入'];
-        var html = '<div class="shape-grid">';
-        shapes.forEach(function(s,i){
-            html += '<div class="shape-item '+(currentCutShape===s?'active':'')+'" data-shape="'+s+'">'+SHAPE_SVGS[s]+'<div class="shape-label">'+labels[i]+'</div></div>';
-        });
-        html += '</div>';
-        html += '<div class="shape-extra">';
-        html += '<div class="setting-toggle-row"><span>字块同步形状</span><input type="checkbox" id="sync-shape-cb" '+(syncShapeToScrap?'checked':'')+' style="accent-color:#000;"></div>';
-        html += '<div id="symbol-input-row" style="'+(currentCutShape==='symbol'?'':'display:none;')+'margin-top:6px;"><input type="text" class="setting-input" id="shape-symbol-input" placeholder="输入符号，如 x * +" value="'+(customSymbol||'')+'" maxlength="2" style="text-align:center;font-size:14px;"></div>';
-        html += '<div id="image-input-row" style="'+(currentCutShape==='image'?'':'display:none;')+'margin-top:6px;"><label class="action-chip file-label" style="font-size:9px;">上传图案<input type="file" accept="image/*" onchange="uploadShapeImage(event)"></label></div>';
-        html += '</div>';
-        panel.innerHTML = html;
-        // 绑定
-        panel.querySelectorAll('.shape-item').forEach(function(el){
-            el.addEventListener('click', function(){
-                currentCutShape = el.getAttribute('data-shape');
-                applyShapeToAll();
-                renderShapePanel();
-            });
-        });
-        var syncCb = panel.querySelector('#sync-shape-cb');
-        if(syncCb) syncCb.addEventListener('change', function(){ syncShapeToScrap = this.checked; applyShapeToAll(); });
-        var symInput = panel.querySelector('#shape-symbol-input');
-        if(symInput) symInput.addEventListener('input', function(){ customSymbol = this.value; applyShapeToAll(); });
-    }
-
-    function toggleShapePanel(){
-        var panel = document.getElementById('shape-panel');
-        if(panel.classList.contains('open')){ panel.classList.remove('open'); }
-        else { closeAllDrawers(); renderShapePanel(); panel.classList.add('open'); }
-    }
-
-    // ===== 形状应用 =====
-    function applyShapeToCut(el){
-        el.classList.remove('shape-symbol','shape-image');
-        el.style.removeProperty('clip-path'); el.style.removeProperty('-webkit-clip-path');
-        el.removeAttribute('data-symbol');
-        if(currentCutShape==='symbol'){
-            el.classList.add('shape-symbol');
-            el.setAttribute('data-symbol', customSymbol||'x');
-        } else if(currentCutShape==='image' && customShapeDataUrl){
-            el.classList.add('shape-image');
-            el.style.setProperty('--cut-mask','url('+customShapeDataUrl+')');
-        } else {
-            var clip = getClipForShape(currentCutShape);
-            if(clip){
-                // 给 ::after 加 clip-path：通过在元素上设 CSS 变量，::after 读不到，所以直接操作内联
-                // 改为用 class + CSS 变量的方式
-                el.style.setProperty('--el-clip', clip);
-            }
-        }
-    }
-    function applyShapeToScrap(el){
-        el.style.removeProperty('clip-path'); el.style.removeProperty('-webkit-clip-path');
-        if(!syncShapeToScrap) return;
-        if(currentCutShape==='symbol'||currentCutShape==='image'||currentCutShape==='default') return;
-        var clip = getClipForShape(currentCutShape);
-        if(clip){ el.style.clipPath = clip; el.style.webkitClipPath = clip; }
-    }
-    function applyShapeToAll(){
-        document.querySelectorAll('#bp-app-container .char-node.is-cut').forEach(applyShapeToCut);
-        document.querySelectorAll('#bp-app-container .scrap-word').forEach(applyShapeToScrap);
-        // 更新 CSS 变量让 ::after 也能用 clip-path
-        var clip = getClipForShape(currentCutShape);
-        if(currentCutShape!=='symbol' && currentCutShape!=='image' && clip){
-            root.style.setProperty('--cut-clip', clip);
-        } else {
-            root.style.removeProperty('--cut-clip');
-        }
-    }
-    function uploadShapeImage(e){
-        var file = e.target.files[0]; if(!file) return;
-        var reader = new FileReader();
-        reader.onload = function(ev){ customShapeDataUrl = ev.target.result; applyShapeToAll(); toastr.success('图案已加载'); };
-        reader.readAsDataURL(file);
-    }
-
-    // 在 CSS 里追加动态 clip-path 支持（::after 读 CSS 变量）
-    var dynStyle = document.createElement('style');
-    dynStyle.textContent = '#bp-app-container .char-node.is-cut:not(.shape-symbol):not(.shape-image)::after { clip-path: var(--cut-clip, inset(2px round 1px)); -webkit-clip-path: var(--cut-clip, inset(2px round 1px)); }';
-    document.head.appendChild(dynStyle);
-
-    // ===== CSS 字体弹窗 =====
     var cssFontMask = document.createElement('div'); cssFontMask.id='bp-cssfont-mask';
     cssFontMask.innerHTML='<div id="bp-cssfont-box"><div style="font-size:14px;font-weight:600;margin-bottom:10px;color:#222;">粘贴字体 CSS 代码</div><div style="font-size:11px;color:#888;margin-bottom:8px;line-height:1.6;">从字体网站复制 @import 和 font-family 的 CSS</div><input type="text" id="bp-cssfont-name" placeholder="字体名称" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #ddd;border-radius:6px;margin-bottom:8px;font-size:13px;"><textarea id="bp-cssfont-css" placeholder="@import url(...);\nfont-family: ...;" style="width:100%;box-sizing:border-box;height:120px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:monospace;"></textarea><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="action-chip" id="bp-cssfont-cancel" style="padding:8px 16px;">取消</button><button class="action-chip" id="bp-cssfont-save" style="padding:8px 16px;background:#1C1C1C;color:#fff;">导入</button></div></div>';
     document.body.appendChild(cssFontMask);
@@ -324,10 +234,8 @@ jQuery(async () => {
     var bubbleBtn = document.createElement('div'); bubbleBtn.id='bp-bubble-btn'; bubbleBtn.innerHTML='&#x1FAE7;'; bubbleBtn.style.display=showBubble?'flex':'none'; bubbleBtn.onclick=function(){window.openBpApp(null);}; document.body.appendChild(bubbleBtn);
     var selPopup = document.createElement('div'); selPopup.id='bp-sel-popup'; selPopup.innerHTML='<span style="font-size:14px;line-height:1;">&#x1FAE7;</span><span>生成拼贴诗</span>'; document.body.appendChild(selPopup);
 
-    var root = container;
-    var colorCategories = { light:[{name:'复古奶白',bg:'#F7F5F0'},{name:'冷纯白',bg:'#FFFFFF'},{name:'冷灰',bg:'#F2F2F2'},{name:'燕麦',bg:'#F0ECE1'},{name:'灰粉',bg:'#EFE5E3'},{name:'鼠尾草绿',bg:'#E5EADF'}], vintage:[{name:'复古砖红',bg:'#6B2D2B'},{name:'中古墨绿',bg:'#334839'},{name:'油画深蓝',bg:'#203A4C'},{name:'羊皮纸',bg:'#D9CBB7'},{name:'焦糖棕',bg:'#6B442A'},{name:'姜黄',bg:'#C99E5C'}], dark:[{name:'纯黑',bg:'#111111'},{name:'碳墨黑',bg:'#1C1E21'},{name:'沥青灰',bg:'#2B2B2B'},{name:'深黛蓝',bg:'#0F1A24'},{name:'极夜紫',bg:'#1E1524'},{name:'浓缩咖啡',bg:'#241B18'}] };
-    var defaultText = "胡琴咿咿呀呀拉着，在万盏灯的夜晚，欢喜是别人的，她只拣些零碎的字，迎面来的风是凉的，来来去去的人影里，到底没有一个是为她停下的；薄薄的月光铺在旧报纸上，荷花开了又谢，的确没有什么长久；拼拼凑凑，贴在墙上的诗笺边角卷了起来，诗里的话她早已忘了，小小的一枚书签却还夹着，插在书缝里，件件都是旧事，你翻翻罢，翻到了是你的缘分，翻不到也是应当的。";
-
+    var root=container,colorCategories={light:[{name:'复古奶白',bg:'#F7F5F0'},{name:'冷纯白',bg:'#FFFFFF'},{name:'冷灰',bg:'#F2F2F2'},{name:'燕麦',bg:'#F0ECE1'},{name:'灰粉',bg:'#EFE5E3'},{name:'鼠尾草绿',bg:'#E5EADF'}],vintage:[{name:'复古砖红',bg:'#6B2D2B'},{name:'中古墨绿',bg:'#334839'},{name:'油画深蓝',bg:'#203A4C'},{name:'羊皮纸',bg:'#D9CBB7'},{name:'焦糖棕',bg:'#6B442A'},{name:'姜黄',bg:'#C99E5C'}],dark:[{name:'纯黑',bg:'#111111'},{name:'碳墨黑',bg:'#1C1E21'},{name:'沥青灰',bg:'#2B2B2B'},{name:'深黛蓝',bg:'#0F1A24'},{name:'极夜紫',bg:'#1E1524'},{name:'浓缩咖啡',bg:'#241B18'}]};
+    var defaultText="胡琴咿咿呀呀拉着，在万盏灯的夜晚，欢喜是别人的，她只拣些零碎的字，迎面来的风是凉的，来来去去的人影里，到底没有一个是为她停下的；薄薄的月光铺在旧报纸上，荷花开了又谢，的确没有什么长久；拼拼凑凑，贴在墙上的诗笺边角卷了起来，诗里的话她早已忘了，小小的一枚书签却还夹着，插在书缝里，件件都是旧事，你翻翻罢，翻到了是你的缘分，翻不到也是应当的。";
     var textFlow=document.getElementById('textFlow'),collageArea=document.getElementById('collage-area'),sourceArea=document.getElementById('source-area'),posterCanvas=document.getElementById('poster-canvas'),resizer=document.getElementById('collage-resizer'),drawer=document.getElementById('drawer'),settingsDrawer=document.getElementById('settings-drawer'),commonMask=document.getElementById('common-mask');
     var currentLayout='vertical',currentTimeMode='solar',isIconVisible=true,customIconDataUrl=null;
     document.getElementById('toggle-bubble-cb').checked=showBubble;
@@ -341,7 +249,61 @@ jQuery(async () => {
     function clearCustomIcon(){customIconDataUrl=null;document.getElementById('custom-icon-img').src='';document.getElementById('custom-icon-preview-row').style.display='none';updateBottomMeta();}
     function swapAreas(){posterCanvas.classList.toggle('swapped');}
 
-    function getFollowFont(){var m=document.querySelector('.mes_text')||document.querySelector('#chat')||document.body;try{return getComputedStyle(m).fontFamily||'serif';}catch(e){return 'serif';}}
+    // ===== 布局面板 =====
+    function renderLayoutPanel(){
+        var p=document.getElementById('layout-panel');
+        p.innerHTML='<div style="font-size:9px;color:#888;margin-bottom:6px;font-weight:600;letter-spacing:0.1em;">布局方式</div><div class="layout-grid"><button class="action-chip '+(currentLayout==='vertical'?'active':'')+'" onclick="switchLayout(\'vertical\')">上下</button><button class="action-chip '+(currentLayout==='horizontal'?'active':'')+'" onclick="switchLayout(\'horizontal\')">左右</button><button class="action-chip" onclick="swapAreas();toggleLayoutPanel();">交换</button></div>';
+    }
+    function toggleLayoutPanel(){
+        var p=document.getElementById('layout-panel'),s=document.getElementById('shape-panel');
+        if(p.classList.contains('open')){p.classList.remove('open');}
+        else{s.classList.remove('open');renderLayoutPanel();p.classList.add('open');}
+    }
+
+    // ===== 形状面板 =====
+    function renderShapePanel(){
+        var panel=document.getElementById('shape-panel');
+        var shapes=['default','square','circle','star5','star4','star8','raindrop','puzzle','symbol','image'];
+        var labels=['默认','方形','圆形','五角星','四芒星','八芒星','雨滴','拼图','符号','导入'];
+        var html='<div class="shape-grid">';
+        shapes.forEach(function(s,i){html+='<div class="shape-item '+(currentCutShape===s?'active':'')+'" data-shape="'+s+'">'+SHAPE_SVGS[s]+'<div class="shape-label">'+labels[i]+'</div></div>';});
+        html+='</div><div class="shape-extra"><div class="setting-toggle-row"><span>字块同步形状</span><input type="checkbox" id="sync-shape-cb" '+(syncShapeToScrap?'checked':'')+' style="accent-color:#000;"></div>';
+        html+='<div id="symbol-input-row" style="'+(currentCutShape==='symbol'?'':'display:none;')+'margin-top:6px;"><input type="text" class="setting-input" id="shape-symbol-input" placeholder="输入符号" value="'+(customSymbol||'')+'" maxlength="2" style="text-align:center;font-size:14px;"></div>';
+        html+='<div id="image-input-row" style="'+(currentCutShape==='image'?'':'display:none;')+'margin-top:6px;"><label class="action-chip file-label" style="font-size:9px;">上传图案<input type="file" accept="image/*" onchange="uploadShapeImage(event)"></label></div></div>';
+        panel.innerHTML=html;
+        panel.querySelectorAll('.shape-item').forEach(function(el){el.addEventListener('click',function(){currentCutShape=el.getAttribute('data-shape');applyShapeToAll();renderShapePanel();});});
+        var syncCb=panel.querySelector('#sync-shape-cb');if(syncCb)syncCb.addEventListener('change',function(){syncShapeToScrap=this.checked;applyShapeToAll();});
+        var symInput=panel.querySelector('#shape-symbol-input');if(symInput)symInput.addEventListener('input',function(){customSymbol=this.value;applyShapeToAll();});
+    }
+    function toggleShapePanel(){
+        var p=document.getElementById('shape-panel'),l=document.getElementById('layout-panel');
+        if(p.classList.contains('open')){p.classList.remove('open');}
+        else{l.classList.remove('open');renderShapePanel();p.classList.add('open');}
+    }
+
+    // ===== 形状应用 =====
+    function applyShapeToCut(el){
+        el.classList.remove('shape-symbol','shape-image');el.removeAttribute('data-symbol');
+        if(currentCutShape==='symbol'){el.classList.add('shape-symbol');el.setAttribute('data-symbol',customSymbol||'x');}
+        else if(currentCutShape==='image'&&customShapeDataUrl){el.classList.add('shape-image');el.style.setProperty('--cut-mask','url('+customShapeDataUrl+')');}
+    }
+    function applyShapeToScrap(el){
+        el.style.removeProperty('clip-path');el.style.removeProperty('-webkit-clip-path');
+        if(!syncShapeToScrap)return;
+        if(currentCutShape==='symbol'||currentCutShape==='image'||currentCutShape==='default')return;
+        var clip=getClipForShape(currentCutShape);
+        if(clip){el.style.clipPath=clip;el.style.webkitClipPath=clip;}
+    }
+    function applyShapeToAll(){
+        document.querySelectorAll('#bp-app-container .char-node.is-cut').forEach(applyShapeToCut);
+        document.querySelectorAll('#bp-app-container .scrap-word').forEach(applyShapeToScrap);
+        var clip=getClipForShape(currentCutShape);
+        if(currentCutShape!=='symbol'&&currentCutShape!=='image'&&clip){root.style.setProperty('--cut-clip',clip);}
+        else{root.style.removeProperty('--cut-clip');}
+    }
+    function uploadShapeImage(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){customShapeDataUrl=ev.target.result;applyShapeToAll();toastr.success('图案已加载');};r.readAsDataURL(f);}
+
+    function getFollowFont(){var m=document.querySelector('.mes_text')||document.querySelector('#chat')||document.body;try{return getComputedStyle(m).fontFamily||'serif';}catch(e){return'serif';}}
     function renderFontLists(){['top','bottom'].forEach(function(z){var c=document.getElementById(z==='top'?'topFontList':'bottomFontList');if(!c)return;c.innerHTML='';var f0=document.createElement('div');f0.className='font-compact-item selected';f0.innerHTML='<div class="font-name-col">跟随酒馆</div>';f0.onclick=function(){setZoneFont(z,'FOLLOW',this,'跟随酒馆');};c.appendChild(f0);customFonts.forEach(function(f){var it=document.createElement('div');it.className='font-compact-item';it.innerHTML='<div class="font-name-col" style="font-family:'+f.family+';">'+f.name+'</div>';it.onclick=function(){setZoneFont(z,f.family,this,f.name);};c.appendChild(it);});});}
     function loadCustomFont(e){var f=e.target.files[0];if(!f)return;var cn=f.name.replace(/\.[^/.]+$/,"").substring(0,10);var r=new FileReader();r.onload=function(ev){var id='BPFont'+Date.now(),du=ev.target.result,rule="@font-face{font-family:'"+id+"';src:url("+du+");}";customFonts.push({id:id,name:cn,family:"'"+id+"'",rule:rule});saveCustomFontsToStorage();injectCustomFonts();renderFontLists();toastr.success('字体['+cn+']已导入');};r.readAsDataURL(f);}
     function openCssFontDialog(){cssFontMask.querySelector('#bp-cssfont-name').value='';cssFontMask.querySelector('#bp-cssfont-css').value='';cssFontMask.style.display='flex';}
@@ -354,12 +316,12 @@ jQuery(async () => {
 
     function toggleDrawer(){if(drawer.classList.contains('open'))closeAllDrawers();else{closeAllDrawers();drawer.classList.add('open');commonMask.classList.add('visible');}}
     function toggleSettingsDrawer(){if(settingsDrawer.classList.contains('open'))closeAllDrawers();else{closeAllDrawers();settingsDrawer.classList.add('open');commonMask.classList.add('visible');}}
-    function closeAllDrawers(){drawer.classList.remove('open');settingsDrawer.classList.remove('open');commonMask.classList.remove('visible');document.getElementById('shape-panel').classList.remove('open');}
+    function closeAllDrawers(){drawer.classList.remove('open');settingsDrawer.classList.remove('open');commonMask.classList.remove('visible');document.getElementById('shape-panel').classList.remove('open');document.getElementById('layout-panel').classList.remove('open');}
 
     function initColorPaletteUI(id,cb){var c=document.getElementById(id);c.innerHTML='';[{label:'浅色系',list:colorCategories.light},{label:'复古色系',list:colorCategories.vintage},{label:'深色系',list:colorCategories.dark}].forEach(function(sec){var lbl=document.createElement('div');lbl.className='color-group-label';lbl.innerText=sec.label;c.appendChild(lbl);var row=document.createElement('div');row.className='color-palette-row';sec.list.forEach(function(cl){var btn=document.createElement('button');btn.className='color-dot';btn.style.backgroundColor=cl.bg;btn.title=cl.name;btn.onclick=function(){cb(cl.bg);};row.appendChild(btn);});c.appendChild(row);});}
     function initTextColorPaletteUI(){var c=document.getElementById('textColorPaletteContainer');var row=document.createElement('div');row.className='color-palette-row';['#1A1A1A','#FFFFFF','#666666','#A0A0A0','#6B2D2B','#334839','#203A4C','#6B442A','#C99E5C','#D9CBB7','#E5EADF','#EFE5E3'].forEach(function(col){var btn=document.createElement('button');btn.className='color-dot';btn.style.backgroundColor=col;btn.onclick=function(){setTextColor(col);};row.appendChild(btn);});c.appendChild(row);}
 
-    function arrangeStrictGrid(tL){var sc=Array.from(collageArea.querySelectorAll('.scrap-word')),ct=sc.length;if(!ct)return;var rect=collageArea.getBoundingClientRect(),cW=28,cH=32,gX=8,gY=12;sc.sort(function(a,b){var ay=parseFloat(a.style.top)||0,by=parseFloat(b.style.top)||0,ax=parseFloat(a.style.left)||0,bx=parseFloat(b.style.left)||0;if(Math.abs(ay-by)<cH)return ax-bx;return ay-by;});var sX=0,sY=0;sc.forEach(function(s){sX+=parseFloat(s.style.left)||0;sY+=parseFloat(s.style.top)||0;});var cX=sX/ct+cW/2,cY=sY/ct+cH/2,aL=Math.min(tL,ct),bs=Math.floor(ct/aL),rm=ct%aL,mC=bs+(rm>0?1:0),mW=mC*cW+(mC-1)*gX,mH=aL*cH+(aL-1)*gY,oX=Math.max(10,Math.min(rect.width-mW-10,cX-mW/2)),oY=Math.max(10,Math.min(rect.height-mH-35,cY-mH/2)),ci=0;for(var l=0;l<aL;l++){var it=bs+(l<rm?1:0),lW=it*cW+(it-1)*gX,lX=oX+(mW-lW)/2,lY=oY+l*(cH+gY);for(var c=0;c<it;c++){var s=sc[ci];if(!s)break;s.style.transition='all 0.32s cubic-bezier(0.2,0.9,0.3,1)';s.style.transform='rotate(0deg)';s.style.opacity='1';s.style.left=(lX+c*(cW+gX))+'px';s.style.top=lY+'px';ci++;}}setTimeout(function(){sc.forEach(function(s){s.style.transition='';});},350);}
+    function arrangeStrictGrid(tL){var sc=Array.from(collageArea.querySelectorAll('.scrap-word')),ct=sc.length;if(!ct)return;var rect=collageArea.getBoundingClientRect(),cW=28,cH=28,gX=8,gY=10;sc.sort(function(a,b){var ay=parseFloat(a.style.top)||0,by=parseFloat(b.style.top)||0,ax=parseFloat(a.style.left)||0,bx=parseFloat(b.style.left)||0;if(Math.abs(ay-by)<cH)return ax-bx;return ay-by;});var sX=0,sY=0;sc.forEach(function(s){sX+=parseFloat(s.style.left)||0;sY+=parseFloat(s.style.top)||0;});var cX=sX/ct+cW/2,cY=sY/ct+cH/2,aL=Math.min(tL,ct),bs=Math.floor(ct/aL),rm=ct%aL,mC=bs+(rm>0?1:0),mW=mC*cW+(mC-1)*gX,mH=aL*cH+(aL-1)*gY,oX=Math.max(10,Math.min(rect.width-mW-10,cX-mW/2)),oY=Math.max(10,Math.min(rect.height-mH-35,cY-mH/2)),ci=0;for(var l=0;l<aL;l++){var it=bs+(l<rm?1:0),lW=it*cW+(it-1)*gX,lX=oX+(mW-lW)/2,lY=oY+l*(cH+gY);for(var c=0;c<it;c++){var s=sc[ci];if(!s)break;s.style.transition='all 0.32s cubic-bezier(0.2,0.9,0.3,1)';s.style.transform='rotate(0deg)';s.style.opacity='1';s.style.left=(lX+c*(cW+gX))+'px';s.style.top=lY+'px';ci++;}}setTimeout(function(){sc.forEach(function(s){s.style.transition='';});},350);}
 
     function calculateCutColor(hex){var rgb=parseInt(hex.replace('#',''),16);var r=(rgb>>16)&0xff,g=(rgb>>8)&0xff,b=rgb&0xff;return(0.2126*r+0.7152*g+0.0722*b)>140?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.15)';}
     function setTopBg(c){sourceArea.style.backgroundImage='none';root.style.setProperty('--top-bg',c);root.style.setProperty('--scrap-bg',c);root.style.setProperty('--top-cut-color',calculateCutColor(c));}
@@ -376,7 +338,7 @@ jQuery(async () => {
     function setTopFontSize(v){root.style.setProperty('--top-font-size',v+'px');setTimeout(function(){if(currentLayout==='horizontal')collageArea.style.height=sourceArea.offsetHeight+'px';},30);}
     function setScrapFontSize(v){root.style.setProperty('--scrap-font-size',v+'px');}
     function syncCollageSize(){if(currentLayout==='vertical'){collageArea.style.width='100%';collageArea.style.height=sourceArea.offsetHeight+'px';}else{collageArea.style.height=sourceArea.offsetHeight+'px';collageArea.style.width=sourceArea.offsetWidth+'px';}}
-    function switchLayout(t){currentLayout=t;document.getElementById('btn-layout-vertical').classList.toggle('active',t==='vertical');document.getElementById('btn-layout-horizontal').classList.toggle('active',t==='horizontal');if(t==='horizontal'){posterCanvas.classList.add('layout-horizontal');collageArea.style.height=sourceArea.offsetHeight+'px';collageArea.style.width='340px';}else{posterCanvas.classList.remove('layout-horizontal');collageArea.style.width='100%';collageArea.style.height=sourceArea.offsetHeight+'px';}}
+    function switchLayout(t){currentLayout=t;if(t==='horizontal'){posterCanvas.classList.add('layout-horizontal');collageArea.style.height=sourceArea.offsetHeight+'px';collageArea.style.width='340px';}else{posterCanvas.classList.remove('layout-horizontal');collageArea.style.width='100%';collageArea.style.height=sourceArea.offsetHeight+'px';}renderLayoutPanel();}
     function initCollageResizer(){var isR=false,sX,sY,sW,sH;var onS=function(e){isR=true;var p=e.type.includes('touch')?e.touches[0]:e;sX=p.clientX;sY=p.clientY;sW=collageArea.offsetWidth;sH=collageArea.offsetHeight;e.stopPropagation();};var onM=function(e){if(!isR)return;var p=e.type.includes('touch')?e.touches[0]:e;if(currentLayout==='vertical'){collageArea.style.height=Math.max(140,sH+(p.clientY-sY))+'px';}else{collageArea.style.width=Math.max(140,sW+(p.clientX-sX))+'px';collageArea.style.height=sourceArea.offsetHeight+'px';}};var onE=function(){isR=false;};resizer.addEventListener('mousedown',onS);window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onE);resizer.addEventListener('touchstart',onS,{passive:true});window.addEventListener('touchmove',onM,{passive:true});window.addEventListener('touchend',onE);}
 
     function renderArticle(text){textFlow.innerHTML='';collageArea.querySelectorAll('.scrap-word').forEach(function(e){e.remove();});text.split('').forEach(function(char,idx){var span=document.createElement('span');span.className='char-node';span.textContent=char;span.dataset.char=char;span.dataset.idx=idx;span.onclick=function(){handleCharClick(span);};textFlow.appendChild(span);});setTimeout(function(){if(currentLayout==='horizontal')collageArea.style.height=sourceArea.offsetHeight+'px';},30);}
@@ -393,22 +355,12 @@ jQuery(async () => {
     function injectFontsIntoIframe(idoc){var topF=(root.style.getPropertyValue('--top-font-family')||'').replace(/'/g,''),botF=(root.style.getPropertyValue('--scrap-font-family')||'').replace(/'/g,'');customFonts.forEach(function(f){var fam=f.family.replace(/'/g,'');if(topF.indexOf(fam)===-1&&botF.indexOf(fam)===-1)return;var rule=f.rule,m=rule.match(/url\((data:[^)]+)\)/);if(m){try{var parts=m[1].split(','),mime=(parts[0].match(/:(.*?);/)||[,'application/octet-stream'])[1],bin=atob(parts[1]),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);var blob=new Blob([arr],{type:mime}),blobUrl=URL.createObjectURL(blob);_exportBlobUrls.push(blobUrl);rule=rule.replace(m[0],'url('+blobUrl+')');}catch(e){}}var s=idoc.createElement('style');s.textContent=rule;idoc.head.appendChild(s);});}
     function exportPosterImage(){if(typeof html2canvas==='undefined'){toastr.warning('截图组件加载中');return;}closeAllDrawers();resizer.style.display='none';toastr.info('正在生成高清图片…');var safetyTimer=setTimeout(function(){resizer.style.display='flex';cleanupExportBlobs();toastr.error('生成超时');},25000);setTimeout(function(){var iframe=document.createElement('iframe');iframe.setAttribute('aria-hidden','true');var cardW=Math.max(posterCanvas.offsetWidth||440,280),cardH=Math.max(posterCanvas.offsetHeight||600,300);iframe.style.cssText='position:fixed;left:-99999px;top:0;width:'+(cardW+8)+'px;height:'+(cardH+8)+'px;border:0;visibility:hidden;';document.body.appendChild(iframe);var cleanup=function(){clearTimeout(safetyTimer);try{iframe.remove();}catch(e){}resizer.style.display='flex';cleanupExportBlobs();};try{var idoc=iframe.contentDocument,cs=getComputedStyle(container),varNames=['--top-bg','--bottom-bg','--scrap-bg','--top-cut-color','--top-font-size','--top-font-family','--scrap-font-size','--scrap-font-family','--shared-text-color','--top-grain-opacity','--bottom-grain-opacity','--page-bg','--top-bg-img','--bottom-bg-img','--cut-clip'],varStr='';varNames.forEach(function(v){var val=cs.getPropertyValue(v);if(val)varStr+=v+':'+val+';';});idoc.open();idoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="'+FONT_HREF+'"><style>html,body{margin:0;padding:0;}'+CSS_TEXT+'</style><style>'+dynStyle.textContent+'</style></head><body></body></html>');idoc.close();injectFontsIntoIframe(idoc);var wrap=idoc.createElement('div');wrap.id='bp-app-container';wrap.style.cssText='position:static;display:block;width:auto;height:auto;padding:0;background:transparent;'+varStr;var clone=posterCanvas.cloneNode(true);var rs=clone.querySelector('#collage-resizer');if(rs)rs.remove();wrap.appendChild(clone);idoc.body.appendChild(wrap);var fontReady=(idoc.fonts&&idoc.fonts.ready)?idoc.fonts.ready:Promise.resolve();Promise.race([fontReady,new Promise(function(r){setTimeout(r,3000);})]).then(function(){setTimeout(function(){try{html2canvas(clone,{scale:3,useCORS:true,allowTaint:true,backgroundColor:null,logging:false,windowWidth:clone.scrollWidth,windowHeight:clone.scrollHeight}).then(function(canvas){cleanup();try{var du=canvas.toDataURL('image/png'),lk=document.createElement('a');lk.download='BlackoutPoetry_'+Date.now()+'.png';lk.href=du;document.body.appendChild(lk);lk.click();lk.remove();toastr.success('已保存高清图片');}catch(e){canvas.toBlob(function(blob){var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='BlackoutPoetry_'+Date.now()+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},3000);toastr.success('已保存高清图片');},'image/png');}}).catch(function(err){cleanup();toastr.error('保存失败: '+(err&&err.message||err));});}catch(e){cleanup();toastr.error('截图出错: '+(e&&e.message||e));}},200);});}catch(e){cleanup();toastr.error('截图出错: '+(e&&e.message||e));}},100);}
 
-    Object.assign(window, {
-        toggleDrawer, toggleSettingsDrawer, closeAllDrawers, toggleIconDisplay, toggleBubbleBtn, toggleShapePanel,
-        uploadCustomIcon, clearCustomIcon, uploadShapeImage, setTopBg, setTopCustomBg, setBottomBg, setBottomCustomBg, setTextColor,
-        applyTextureEffect, setTopTexture, setTopGrainOpacity, setBottomTexture, setBottomGrainOpacity,
-        setZoneFont, loadCustomFont, openCssFontDialog, setTopFontSize, setScrapFontSize,
-        syncCollageSize, switchLayout, swapAreas, renderArticle, handleCharClick, spawnScrap, bindDrag,
-        uploadTopBg, uploadBottomBg, resetCuts, exportPosterImage,
-        arrangeStrictGrid, getGanZhiDate, setTimeFormat, updateBottomMeta
-    });
+    Object.assign(window,{toggleDrawer,toggleSettingsDrawer,closeAllDrawers,toggleIconDisplay,toggleBubbleBtn,toggleShapePanel,toggleLayoutPanel,uploadCustomIcon,clearCustomIcon,uploadShapeImage,setTopBg,setTopCustomBg,setBottomBg,setBottomCustomBg,setTextColor,applyTextureEffect,setTopTexture,setTopGrainOpacity,setBottomTexture,setBottomGrainOpacity,setZoneFont,loadCustomFont,openCssFontDialog,setTopFontSize,setScrapFontSize,syncCollageSize,switchLayout,swapAreas,renderArticle,handleCharClick,spawnScrap,bindDrag,uploadTopBg,uploadBottomBg,resetCuts,exportPosterImage,arrangeStrictGrid,getGanZhiDate,setTimeFormat,updateBottomMeta});
 
-    initColorPaletteUI('topPaletteContainer', setTopBg);
-    initColorPaletteUI('bottomPaletteContainer', setBottomBg);
-    initTextColorPaletteUI(); renderFontLists(); initCollageResizer();
+    initColorPaletteUI('topPaletteContainer',setTopBg);initColorPaletteUI('bottomPaletteContainer',setBottomBg);initTextColorPaletteUI();renderFontLists();initCollageResizer();
 
     var mountExt=function(){var p=document.getElementById('extensions_settings');if(p&&!document.getElementById('bp-ext-item')){var d=document.createElement('div');d.className='list-group-item flex-container flexGap smolWidth';d.id='bp-ext-item';d.innerHTML='<div class="m-b-0 m-t-0 extensionsMenu--title"><span style="font-size:14px;margin-right:5px;">&#x1FAE7;</span><span>剪报拼贴诗</span></div><div style="cursor:pointer;margin-left:auto;background:var(--SmartThemeBotttomColor);padding:4px 10px;border-radius:4px;font-size:12px;" onclick="openBpApp(null)">打开工坊</div>';p.insertAdjacentElement('beforeend',d);}};
-    setTimeout(mountExt,1500); setInterval(mountExt,5000);
+    setTimeout(mountExt,1500);setInterval(mountExt,5000);
 
     var selectedText='';
     document.addEventListener('selectionchange',function(){var sel=window.getSelection(),text=sel?sel.toString().trim():'';if(text.length>0&&sel.anchorNode&&sel.anchorNode.parentElement&&sel.anchorNode.parentElement.closest&&sel.anchorNode.parentElement.closest('#chat')){selectedText=text;selPopup.style.display='flex';}else{selPopup.style.display='none';}});
