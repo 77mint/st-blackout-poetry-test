@@ -76,13 +76,11 @@ jQuery(async () => {
     --scrap-font-size:13px;--bottom-grain-opacity:0;--scrap-font-family:'Noto Serif SC',serif;
     --shared-text-color:#1A1A1A;--scrap-text-color:#1A1A1A;--wm-color:#999999;
     position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:var(--page-bg);
-    z-index:999999;display:none;flex-direction:column;align-items:center;overflow-y:auto;
-    padding:20px;padding-top:calc(env(safe-area-inset-top,20px) + 16px);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-}
+    z-index:999999;display:none;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto;
+    padding:20px;
 #bp-app-container,#bp-app-container *,#bp-app-container *::before,#bp-app-container *::after{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none;}
 #bp-app-container input[type="file"],#bp-app-container input[type="color"],#bp-app-container input[type="text"],#bp-app-container input[type="checkbox"],#bp-app-container input[type="range"],#bp-app-container select,#bp-app-container textarea{user-select:auto!important;-webkit-user-select:auto!important;pointer-events:auto!important;-webkit-tap-highlight-color:transparent;}
-#bp-app-container #bp-toolbar{display:flex;justify-content:space-between;padding:0 14px;margin-bottom:12px;width:100%;max-width:440px;}
+#bp-app-container #bp-toolbar{display:flex;justify-content:space-between;padding:0 14px;margin-bottom:14px;width:100%;max-width:440px;flex-shrink:0;}
 #bp-app-container #bp-toolbar>div{display:flex;align-items:center;gap:6px;}
 #bp-app-container .icon-btn{width:34px;height:34px;display:flex;justify-content:center;align-items:center;cursor:pointer;background:rgba(255,255,255,0.92);border:1px solid rgba(0,0,0,0.08);border-radius:4px;backdrop-filter:blur(8px);box-shadow:0 4px 15px rgba(0,0,0,0.04);transition:all 0.2s ease;}
 #bp-app-container .icon-btn:hover{background:#FFF;border-color:#000;}
@@ -210,18 +208,38 @@ jQuery(async () => {
             if(!text){
                 collageArea.style.height='120px';
                 setTimeout(function(){
-                    var targets=['我','爱','你'];
                     var allNodes=Array.from(textFlow.querySelectorAll('.char-node'));
-                    var picked=[];
-                    targets.forEach(function(ch){
-                        for(var i=allNodes.length-1;i>=0;i--){
-                            if(allNodes[i].textContent===ch&&!allNodes[i].classList.contains('is-cut')&&picked.indexOf(i)===-1){
-                                picked.push(i);break;
-                            }
-                        }
-                    });
-                    picked.forEach(function(idx){allNodes[idx].click();});
-                    setTimeout(function(){arrangeStrictGrid(1);},150);
+var cutTargets=['我','爱','你'];
+var cutIndices=[];
+cutTargets.forEach(function(ch){
+    for(var i=allNodes.length-1;i>=0;i--){
+        if(allNodes[i].textContent===ch&&!allNodes[i].classList.contains('is-cut')&&cutIndices.indexOf(i)===-1){
+            cutIndices.push(i);break;
+        }
+    }
+});
+cutIndices.forEach(function(idx){allNodes[idx].click();});
+setTimeout(function(){
+    var scraps=Array.from(collageArea.querySelectorAll('.scrap-word:not(.bp-welcome-scrap)'));
+    var ordered=[];
+    cutTargets.forEach(function(ch){
+        for(var i=0;i<scraps.length;i++){
+            if(scraps[i].textContent===ch&&ordered.indexOf(scraps[i])===-1){
+                ordered.push(scraps[i]);break;
+            }
+        }
+    });
+    var rect=collageArea.getBoundingClientRect();
+    var totalW=ordered.length*30+(ordered.length-1)*8;
+    var startX=(rect.width-totalW)/2;
+    var centerY=(rect.height-35)/2;
+    ordered.forEach(function(s,i){
+        s.style.transition='all 0.3s ease';
+        s.style.left=(startX+i*38)+'px';
+        s.style.top=centerY+'px';
+    });
+    setTimeout(function(){ordered.forEach(function(s){s.style.transition='';});},350);
+},50);
                 },100);
             }
         },100);
