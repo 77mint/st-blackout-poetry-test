@@ -34,36 +34,12 @@ jQuery(async () => {
     var bubbleCustomImg=localStorage.getItem(BP_BUBBLE_IMG_KEY)||'';
 
     var currentCutShape='default',syncShapeToScrap=false,customSymbol='',customShapeDataUrl=null;
-    var SHAPE_CLIPS={
-        'default':'','square':'',
-        'circle':'circle(48% at 50% 50%)',
-        'star5':'polygon(50% 5%,61% 35%,95% 35%,68% 55%,78% 88%,50% 68%,22% 88%,32% 55%,5% 35%,39% 35%)',
-        'star4':'polygon(50% 5%,60% 40%,95% 50%,60% 60%,50% 95%,40% 60%,5% 50%,40% 40%)',
-        'star8':'polygon(50% 5%,56% 30%,76% 12%,70% 38%,95% 38%,76% 50%,95% 62%,70% 62%,76% 88%,56% 70%,50% 95%,44% 70%,24% 88%,30% 62%,5% 62%,24% 50%,5% 38%,30% 38%,24% 12%,44% 30%)',
-        'raindrop':'polygon(50% 5%,56% 15%,68% 35%,78% 52%,80% 62%,78% 72%,72% 82%,62% 90%,50% 95%,38% 90%,28% 82%,22% 72%,20% 62%,22% 52%,32% 35%,44% 15%)',
-        'puzzle':''
-    };
-    var PUZZLE_VARIANTS=[
-        'polygon(0% 0%,38% 0%,38% 8%,44% 14%,56% 14%,62% 8%,62% 0%,100% 0%,100% 38%,92% 38%,86% 44%,86% 56%,92% 62%,100% 62%,100% 100%,0% 100%)',
-        'polygon(0% 0%,100% 0%,100% 38%,92% 38%,86% 44%,86% 56%,92% 62%,100% 62%,100% 100%,62% 100%,62% 92%,56% 86%,44% 86%,38% 92%,38% 100%,0% 100%)',
-        'polygon(0% 0%,100% 0%,100% 100%,62% 100%,62% 92%,56% 86%,44% 86%,38% 92%,38% 100%,0% 100%,0% 62%,8% 62%,14% 56%,14% 44%,8% 38%,0% 38%)',
-        'polygon(0% 0%,38% 0%,38% 8%,44% 14%,56% 14%,62% 8%,62% 0%,100% 0%,100% 100%,0% 100%,0% 62%,8% 62%,14% 56%,14% 44%,8% 38%,0% 38%)'
-    ];
+    var SHAPE_CLIPS={'default':'','square':'','circle':'circle(48% at 50% 50%)','star5':'polygon(50% 5%,61% 35%,95% 35%,68% 55%,78% 88%,50% 68%,22% 88%,32% 55%,5% 35%,39% 35%)','star4':'polygon(50% 5%,60% 40%,95% 50%,60% 60%,50% 95%,40% 60%,5% 50%,40% 40%)','star8':'polygon(50% 5%,56% 30%,76% 12%,70% 38%,95% 38%,76% 50%,95% 62%,70% 62%,76% 88%,56% 70%,50% 95%,44% 70%,24% 88%,30% 62%,5% 62%,24% 50%,5% 38%,30% 38%,24% 12%,44% 30%)','raindrop':'polygon(50% 5%,56% 15%,68% 35%,78% 52%,80% 62%,78% 72%,72% 82%,62% 90%,50% 95%,38% 90%,28% 82%,22% 72%,20% 62%,22% 52%,32% 35%,44% 15%)','puzzle':''};
+    var PUZZLE_VARIANTS=['polygon(0% 0%,38% 0%,38% 8%,44% 14%,56% 14%,62% 8%,62% 0%,100% 0%,100% 38%,92% 38%,86% 44%,86% 56%,92% 62%,100% 62%,100% 100%,0% 100%)','polygon(0% 0%,100% 0%,100% 38%,92% 38%,86% 44%,86% 56%,92% 62%,100% 62%,100% 100%,62% 100%,62% 92%,56% 86%,44% 86%,38% 92%,38% 100%,0% 100%)','polygon(0% 0%,100% 0%,100% 100%,62% 100%,62% 92%,56% 86%,44% 86%,38% 92%,38% 100%,0% 100%,0% 62%,8% 62%,14% 56%,14% 44%,8% 38%,0% 38%)','polygon(0% 0%,38% 0%,38% 8%,44% 14%,56% 14%,62% 8%,62% 0%,100% 0%,100% 100%,0% 100%,0% 62%,8% 62%,14% 56%,14% 44%,8% 38%,0% 38%)'];
     function getRandomPuzzleClip(){return PUZZLE_VARIANTS[Math.floor(Math.random()*PUZZLE_VARIANTS.length)];}
     function getClipForShape(s){if(s==='puzzle')return getRandomPuzzleClip();return SHAPE_CLIPS[s]||'';}
 
-    var SHAPE_SVGS={
-        'default':'<svg viewBox="0 0 16 16"><rect x="3" y="2" width="10" height="12" rx="1" fill="#333"/></svg>',
-        'square':'<svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" fill="#333"/></svg>',
-        'circle':'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#333"/></svg>',
-        'star5':'<svg viewBox="0 0 16 16"><polygon points="8,1 10,6 15.5,6 11,9.5 12.5,15 8,11.5 3.5,15 5,9.5 0.5,6 6,6" fill="#333"/></svg>',
-        'star4':'<svg viewBox="0 0 16 16"><polygon points="8,0 10,6 16,8 10,10 8,16 6,10 0,8 6,6" fill="#333"/></svg>',
-        'star8':'<svg viewBox="0 0 16 16"><polygon points="8,0 9.2,4.5 12.6,1.6 11.5,6.2 16,6 12.4,8 16,10 11.5,9.8 12.6,14.4 9.2,11.5 8,16 6.8,11.5 3.4,14.4 4.5,9.8 0,10 3.6,8 0,6 4.5,6.2 3.4,1.6 6.8,4.5" fill="#333"/></svg>',
-        'raindrop':'<svg viewBox="0 0 16 16"><path d="M8,1C8,1 13,7 13,10.5C13,13.5 10.8,16 8,16C5.2,16 3,13.5 3,10.5C3,7 8,1 8,1Z" fill="#333"/></svg>',
-        'puzzle':'<svg viewBox="0 0 16 16"><path d="M1,1H6V3.5Q5,3.5 5,5Q5,6.5 6,6.5V10H1ZM7,1H11V3Q12,3 12,4.5Q12,6 11,6V10H7V6.5Q8,6.5 8,5Q8,3.5 7,3.5Z" fill="#333"/></svg>',
-        'symbol':'<svg viewBox="0 0 16 16"><text x="8" y="12" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">A</text></svg>',
-        'image':'<svg viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="10" rx="1" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="5" cy="7" r="1.5" fill="#333"/><polyline points="1,13 6,8 9,11 11,9 15,13" fill="none" stroke="#333" stroke-width="1"/></svg>'
-    };
+    var SHAPE_SVGS={'default':'<svg viewBox="0 0 16 16"><rect x="3" y="2" width="10" height="12" rx="1" fill="#333"/></svg>','square':'<svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" fill="#333"/></svg>','circle':'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#333"/></svg>','star5':'<svg viewBox="0 0 16 16"><polygon points="8,1 10,6 15.5,6 11,9.5 12.5,15 8,11.5 3.5,15 5,9.5 0.5,6 6,6" fill="#333"/></svg>','star4':'<svg viewBox="0 0 16 16"><polygon points="8,0 10,6 16,8 10,10 8,16 6,10 0,8 6,6" fill="#333"/></svg>','star8':'<svg viewBox="0 0 16 16"><polygon points="8,0 9.2,4.5 12.6,1.6 11.5,6.2 16,6 12.4,8 16,10 11.5,9.8 12.6,14.4 9.2,11.5 8,16 6.8,11.5 3.4,14.4 4.5,9.8 0,10 3.6,8 0,6 4.5,6.2 3.4,1.6 6.8,4.5" fill="#333"/></svg>','raindrop':'<svg viewBox="0 0 16 16"><path d="M8,1C8,1 13,7 13,10.5C13,13.5 10.8,16 8,16C5.2,16 3,13.5 3,10.5C3,7 8,1 8,1Z" fill="#333"/></svg>','puzzle':'<svg viewBox="0 0 16 16"><path d="M1,1H6V3.5Q5,3.5 5,5Q5,6.5 6,6.5V10H1ZM7,1H11V3Q12,3 12,4.5Q12,6 11,6V10H7V6.5Q8,6.5 8,5Q8,3.5 7,3.5Z" fill="#333"/></svg>','symbol':'<svg viewBox="0 0 16 16"><text x="8" y="12" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">A</text></svg>','image':'<svg viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="10" rx="1" fill="none" stroke="#333" stroke-width="1.2"/><circle cx="5" cy="7" r="1.5" fill="#333"/><polyline points="1,13 6,8 9,11 11,9 15,13" fill="none" stroke="#333" stroke-width="1"/></svg>'};
 
     var defaultText="我们讨论爱就像讨论牡蛎：盲目，伪装，愚钝，嫉羡，隐于黑暗、不为人道的部分，才是让爱成为爱本身的东西。爱之于你我，就像泥沙之于牡蛎，痛苦忍耐，最后流出几滴眼泪。有人说，咦，原来你有这么多珍珠呀。";
     var topBgDataUrl='';
@@ -78,6 +54,8 @@ jQuery(async () => {
     position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:var(--page-bg);
     z-index:999999;display:none;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto;
     padding:20px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
 #bp-app-container,#bp-app-container *,#bp-app-container *::before,#bp-app-container *::after{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none;}
 #bp-app-container input[type="file"],#bp-app-container input[type="color"],#bp-app-container input[type="text"],#bp-app-container input[type="checkbox"],#bp-app-container input[type="range"],#bp-app-container select,#bp-app-container textarea{user-select:auto!important;-webkit-user-select:auto!important;pointer-events:auto!important;-webkit-tap-highlight-color:transparent;}
 #bp-app-container #bp-toolbar{display:flex;justify-content:space-between;padding:0 14px;margin-bottom:14px;width:100%;max-width:440px;flex-shrink:0;}
@@ -172,7 +150,7 @@ jQuery(async () => {
 #bp-cssfont-box textarea{-webkit-user-select:auto;user-select:auto;}
     `;
     var css=document.createElement('style');css.textContent=CSS_TEXT;document.head.appendChild(css);
-    var container=document.createElement('div');container.id='bp-app-container';
+        var container=document.createElement('div');container.id='bp-app-container';
     container.innerHTML='<svg style="display:none;"><defs><filter id="tex-frosted-filter"><feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="4" stitchTiles="stitch"/></filter><filter id="tex-noise-filter"><feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" stitchTiles="stitch"/></filter><filter id="tex-paper-filter"><feTurbulence type="turbulence" baseFrequency="0.04" numOctaves="5" result="noise"/><feDiffuseLighting in="noise" lighting-color="#fff" surfaceScale="2"><feDistantLight azimuth="45" elevation="60"/></feDiffuseLighting></filter><filter id="tex-fabric-filter"><feTurbulence type="fractalNoise" baseFrequency="0.3 0.05" numOctaves="3" stitchTiles="stitch"/></filter><filter id="tex-scratch-filter"><feTurbulence type="turbulence" baseFrequency="0.01 0.4" numOctaves="2" stitchTiles="stitch"/></filter></defs></svg>'
     +'<div id="bp-toolbar"><div><div class="icon-btn" onclick="closeBpApp()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div><div class="icon-btn" onclick="toggleDrawer()"><div style="display:flex;flex-direction:column;gap:3px;align-items:center;"><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div></div></div><div class="icon-btn" onclick="toggleLayoutPanel()"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="7.5" rx="1.5" stroke="#1C1C1C" stroke-width="1.6"/><rect x="3" y="13.5" width="18" height="7.5" rx="1.5" stroke="#1C1C1C" stroke-width="1.6"/></svg></div><div class="icon-btn" onclick="toggleShapePanel()"><svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1C" stroke-width="1.6"><polygon points="12,2 15,9 22,9 16.5,13.5 18.5,21 12,16.5 5.5,21 7.5,13.5 2,9 9,9" fill="none"/></svg></div></div><div><div class="icon-btn" onclick="toggleSettingsDrawer()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="icon-btn" onclick="exportPosterImage()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div></div></div>'
     +'<div id="layout-panel" class="bp-float-panel"></div><div id="shape-panel" class="bp-float-panel"></div>'
@@ -201,46 +179,50 @@ jQuery(async () => {
     if(bubbleCustomImg)document.getElementById('bubble-icon-preview').style.display='block';
 
     window.openBpApp=function(text){
-        container.style.display='flex';
-        renderArticle(text||defaultText);
+        container.style.display='flex';renderArticle(text||defaultText);
         setTimeout(function(){
             syncCollageSize();updateBottomMeta();
             if(!text){
                 collageArea.style.height='120px';
                 setTimeout(function(){
+                    // 抠字：从后往前找，每个字只抠一次
                     var allNodes=Array.from(textFlow.querySelectorAll('.char-node'));
-var cutTargets=['我','爱','你'];
-var cutIndices=[];
-cutTargets.forEach(function(ch){
-    for(var i=allNodes.length-1;i>=0;i--){
-        if(allNodes[i].textContent===ch&&!allNodes[i].classList.contains('is-cut')&&cutIndices.indexOf(i)===-1){
-            cutIndices.push(i);break;
-        }
-    }
-});
-cutIndices.forEach(function(idx){allNodes[idx].click();});
-setTimeout(function(){
-    var scraps=Array.from(collageArea.querySelectorAll('.scrap-word:not(.bp-welcome-scrap)'));
-    var ordered=[];
-    cutTargets.forEach(function(ch){
-        for(var i=0;i<scraps.length;i++){
-            if(scraps[i].textContent===ch&&ordered.indexOf(scraps[i])===-1){
-                ordered.push(scraps[i]);break;
-            }
-        }
-    });
-    var rect=collageArea.getBoundingClientRect();
-    var totalW=ordered.length*30+(ordered.length-1)*8;
-    var startX=(rect.width-totalW)/2;
-    var centerY=(rect.height-35)/2;
-    ordered.forEach(function(s,i){
-        s.style.transition='all 0.3s ease';
-        s.style.left=(startX+i*38)+'px';
-        s.style.top=centerY+'px';
-    });
-    setTimeout(function(){ordered.forEach(function(s){s.style.transition='';});},350);
-},50);
-                },100);
+                    var cutTargets=['我','爱','你'];
+                    var cutNodes=[];
+                    cutTargets.forEach(function(ch){
+                        for(var i=allNodes.length-1;i>=0;i--){
+                            var already=false;
+                            for(var j=0;j<cutNodes.length;j++){if(cutNodes[j]===allNodes[i]){already=true;break;}}
+                            if(allNodes[i].textContent===ch&&!allNodes[i].classList.contains('is-cut')&&!already){
+                                cutNodes.push(allNodes[i]);allNodes[i].click();break;
+                            }
+                        }
+                    });
+                    // 排列：强制按"我→爱→你"顺序居中排一行
+                    setTimeout(function(){
+                        var scraps=Array.from(collageArea.querySelectorAll('.scrap-word:not(.bp-welcome-scrap)'));
+                        var ordered=[];
+                        cutTargets.forEach(function(ch){
+                            for(var i=0;i<scraps.length;i++){
+                                var used=false;for(var j=0;j<ordered.length;j++){if(ordered[j]===scraps[i]){used=true;break;}}
+                                if(scraps[i].textContent===ch&&!used){ordered.push(scraps[i]);break;}
+                            }
+                        });
+                        if(ordered.length){
+                            var rect=collageArea.getBoundingClientRect();
+                            var w=ordered[0].offsetWidth||28;
+                            var totalW=ordered.length*w+(ordered.length-1)*8;
+                            var startX=(rect.width-totalW)/2;
+                            var centerY=Math.max(10,(rect.height-35)/2-w/2);
+                            ordered.forEach(function(s,i){
+                                s.style.transition='all 0.3s ease';
+                                s.style.left=(startX+i*(w+8))+'px';
+                                s.style.top=centerY+'px';
+                            });
+                            setTimeout(function(){ordered.forEach(function(s){s.style.transition='';});},350);
+                        }
+                    },80);
+                },120);
             }
         },100);
     };
@@ -251,26 +233,21 @@ setTimeout(function(){
     function clearBubbleIcon(){bubbleCustomImg='';localStorage.removeItem(BP_BUBBLE_IMG_KEY);renderBubbleContent();document.getElementById('bubble-icon-preview').style.display='none';}
     function swapAreas(){posterCanvas.classList.toggle('swapped');}
     function setWmColor(c){root.style.setProperty('--wm-color',c);}
-
     function renderLayoutPanel(){document.getElementById('layout-panel').innerHTML='<div style="font-size:9px;color:#888;margin-bottom:6px;font-weight:600;">布局</div><div class="layout-grid"><button class="action-chip '+(currentLayout==='vertical'?'active':'')+'" onclick="switchLayout(\'vertical\')">上下</button><button class="action-chip '+(currentLayout==='horizontal'?'active':'')+'" onclick="switchLayout(\'horizontal\')">左右</button><button class="action-chip" onclick="swapAreas();toggleLayoutPanel();">交换</button></div>';}
     function toggleLayoutPanel(){var p=document.getElementById('layout-panel'),s=document.getElementById('shape-panel');if(p.classList.contains('open'))p.classList.remove('open');else{s.classList.remove('open');renderLayoutPanel();p.classList.add('open');}}
-
     function renderShapePanel(){var panel=document.getElementById('shape-panel'),shapes=['default','square','circle','star5','star4','star8','raindrop','puzzle','symbol','image'],labels=['默认','方形','圆形','五角星','四芒星','八芒星','雨滴','拼图','符号','导入'],html='<div class="shape-grid">';shapes.forEach(function(s,i){html+='<div class="shape-item '+(currentCutShape===s?'active':'')+'" data-shape="'+s+'">'+SHAPE_SVGS[s]+'<div class="shape-label">'+labels[i]+'</div></div>';});html+='</div><div class="shape-extra"><div class="setting-toggle-row"><span>字块同步形状</span><input type="checkbox" id="sync-shape-cb" '+(syncShapeToScrap?'checked':'')+' style="accent-color:#000;"></div>';html+='<div id="symbol-input-row" style="'+(currentCutShape==='symbol'?'':'display:none;')+'margin-top:6px;"><input type="text" class="setting-input" id="shape-symbol-input" placeholder="输入符号" value="'+(customSymbol||'')+'" maxlength="2" style="text-align:center;font-size:14px;"></div>';html+='<div id="image-input-row" style="'+(currentCutShape==='image'?'':'display:none;')+'margin-top:6px;"><label class="action-chip file-label" style="font-size:9px;">上传图案<input type="file" accept="image/*" onchange="uploadShapeImage(event)"></label></div></div>';panel.innerHTML=html;panel.querySelectorAll('.shape-item').forEach(function(el){el.addEventListener('click',function(){currentCutShape=el.getAttribute('data-shape');applyShapeToAll();renderShapePanel();});});var sc=panel.querySelector('#sync-shape-cb');if(sc)sc.addEventListener('change',function(){syncShapeToScrap=this.checked;applyShapeToAll();});var si=panel.querySelector('#shape-symbol-input');if(si)si.addEventListener('input',function(){customSymbol=this.value;applyShapeToAll();});}
     function toggleShapePanel(){var p=document.getElementById('shape-panel'),l=document.getElementById('layout-panel');if(p.classList.contains('open'))p.classList.remove('open');else{l.classList.remove('open');renderShapePanel();p.classList.add('open');}}
-
     function getShapeType(s){if(s==='default'||s==='square')return s;if(s==='symbol')return'symbol';if(s==='image')return'image';return'clip';}
     function applyShapeToCut(el){el.classList.remove('shape-square','shape-clip','shape-symbol','shape-image');el.removeAttribute('data-symbol');el.style.removeProperty('--cut-clip');el.style.removeProperty('--cut-mask');var t=getShapeType(currentCutShape);if(t==='square')el.classList.add('shape-square');else if(t==='clip'){el.classList.add('shape-clip');el.style.setProperty('--cut-clip',getClipForShape(currentCutShape));}else if(t==='symbol'){el.classList.add('shape-symbol');el.setAttribute('data-symbol',customSymbol||'x');}else if(t==='image'&&customShapeDataUrl){el.classList.add('shape-image');el.style.setProperty('--cut-mask','url('+customShapeDataUrl+')');}}
     function applyShapeToScrap(el){el.classList.remove('shape-square','shape-clip');el.style.removeProperty('--scrap-clip');if(!syncShapeToScrap)return;var t=getShapeType(currentCutShape);if(t==='square')el.classList.add('shape-square');else if(t==='clip'){el.classList.add('shape-clip');el.style.setProperty('--scrap-clip',getClipForShape(currentCutShape));}}
     function applyShapeToAll(){document.querySelectorAll('#bp-app-container .char-node.is-cut').forEach(applyShapeToCut);document.querySelectorAll('#bp-app-container .scrap-word:not(.bp-welcome-scrap)').forEach(applyShapeToScrap);}
     function uploadShapeImage(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){customShapeDataUrl=ev.target.result;applyShapeToAll();toastr.success('图案已加载');};r.readAsDataURL(f);}
-
     function getFollowFont(){var m=document.querySelector('.mes_text')||document.querySelector('#chat')||document.body;try{return getComputedStyle(m).fontFamily||'serif';}catch(e){return'serif';}}
     function renderFontLists(){['top','bottom'].forEach(function(z){var c=document.getElementById(z==='top'?'topFontList':'bottomFontList');if(!c)return;c.innerHTML='';var f0=document.createElement('div');f0.className='font-compact-item selected';f0.innerHTML='<div class="font-name-col">跟随酒馆</div>';f0.onclick=function(){setZoneFont(z,'FOLLOW',this,'跟随酒馆');};c.appendChild(f0);customFonts.forEach(function(f){var it=document.createElement('div');it.className='font-compact-item';it.innerHTML='<div class="font-name-col" style="font-family:'+f.family+';">'+f.name+'</div>';it.onclick=function(){setZoneFont(z,f.family,this,f.name);};c.appendChild(it);});});}
     function loadCustomFont(e){var f=e.target.files[0];if(!f)return;var cn=f.name.replace(/\.[^/.]+$/,"").substring(0,10);var r=new FileReader();r.onload=function(ev){var id='BPFont'+Date.now(),du=ev.target.result,rule="@font-face{font-family:'"+id+"';src:url("+du+");}";customFonts.push({id:id,name:cn,family:"'"+id+"'",rule:rule});saveCustomFontsToStorage();injectCustomFonts();renderFontLists();toastr.success('字体['+cn+']已导入');};r.readAsDataURL(f);}
     function openCssFontDialog(){cssFontMask.querySelector('#bp-cssfont-name').value='';cssFontMask.querySelector('#bp-cssfont-css').value='';cssFontMask.style.display='flex';}
     cssFontMask.querySelector('#bp-cssfont-cancel').onclick=function(){cssFontMask.style.display='none';};
     cssFontMask.querySelector('#bp-cssfont-save').onclick=function(){var n=cssFontMask.querySelector('#bp-cssfont-name').value.trim()||'自定义字体',ci=cssFontMask.querySelector('#bp-cssfont-css').value.trim();if(!ci){toastr.error('CSS不能为空');return;}var il='',im=ci.match(/@import[^;]+;/g);if(im)il=im.join('\n');var m=ci.match(/font-family\s*:\s*([^;}\n]+)/),fm=m?m[1].trim():'sans-serif';if(!il){toastr.error('没找到@import');return;}var id='BPFontCss'+Date.now();customFonts.push({id:id,name:n,family:fm,rule:il});saveCustomFontsToStorage();injectCustomFonts();renderFontLists();cssFontMask.style.display='none';toastr.success('字体['+n+']已导入');};
-
     function getGanZhiDate(d){var tG=["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"],dZ=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"],y=d.getFullYear(),o=(y-4)%60;return tG[o%10]+dZ[o%12]+'年 '+tG[d.getMonth()%10]+dZ[(d.getMonth()+2)%12]+'月 '+tG[d.getDate()%10]+dZ[(d.getDate()+4)%12]+'日';}
     function setTimeFormat(m){currentTimeMode=m;document.getElementById('btn-time-solar').classList.toggle('active',m==='solar');document.getElementById('btn-time-lunar').classList.toggle('active',m==='lunar');updateBottomMeta();}
     function updateBottomMeta(){var st=document.getElementById('toggle-time-cb').checked,ts=document.getElementById('bottom-time-span');if(st){ts.style.display='inline';var now=new Date();ts.innerText=currentTimeMode==='solar'?now.getFullYear()+'.'+(now.getMonth()+1)+'.'+now.getDate():getGanZhiDate(now);}else ts.style.display='none';var sw=document.getElementById('toggle-watermark-cb').checked,ws=document.getElementById('bottom-wm-span');ws.style.display=sw?'inline':'none';ws.innerText=document.getElementById('watermark-text-input').value.trim();}
@@ -301,28 +278,10 @@ setTimeout(function(){
     function initCollageResizer(){var isR=false,sX,sY,sW,sH;var onS=function(e){isR=true;var p=e.type.includes('touch')?e.touches[0]:e;sX=p.clientX;sY=p.clientY;sW=collageArea.offsetWidth;sH=collageArea.offsetHeight;e.stopPropagation();};var onM=function(e){if(!isR)return;var p=e.type.includes('touch')?e.touches[0]:e;if(currentLayout==='vertical')collageArea.style.height=Math.max(80,sH+(p.clientY-sY))+'px';else{collageArea.style.width=Math.max(140,sW+(p.clientX-sX))+'px';collageArea.style.height=sourceArea.offsetHeight+'px';}};var onE=function(){isR=false;};resizer.addEventListener('mousedown',onS);window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onE);resizer.addEventListener('touchstart',onS,{passive:true});window.addEventListener('touchmove',onM,{passive:true});window.addEventListener('touchend',onE);}
     function renderArticle(text){textFlow.innerHTML='';collageArea.querySelectorAll('.scrap-word').forEach(function(e){e.remove();});text.split('').forEach(function(char,idx){var span=document.createElement('span');span.className='char-node';span.textContent=char;span.dataset.char=char;span.dataset.idx=idx;span.onclick=function(){handleCharClick(span);};textFlow.appendChild(span);});setTimeout(function(){if(currentLayout==='horizontal')collageArea.style.height=sourceArea.offsetHeight+'px';},30);}
     function handleCharClick(span){var idx=span.dataset.idx;if(span.classList.contains('is-cut')){span.classList.remove('is-cut','shape-square','shape-clip','shape-symbol','shape-image');span.style.removeProperty('--cut-clip');span.style.removeProperty('--cut-mask');var sc=collageArea.querySelector('.scrap-word[data-idx="'+idx+'"]');if(sc)sc.remove();return;}collageArea.querySelectorAll('.bp-welcome-scrap').forEach(function(e){e.remove();});span.classList.add('is-cut');applyShapeToCut(span);spawnScrap(span,idx);}
-    function spawnScrap(charNode,idx){
-        var char=charNode.textContent;
-        var scrap=document.createElement('div');scrap.className='scrap-word';scrap.textContent=char;scrap.dataset.idx=idx;
-        if(topBgDataUrl){
-            var saRect=sourceArea.getBoundingClientRect();
-            var chRect=charNode.getBoundingClientRect();
-            scrap.style.setProperty('--scrap-bg-img','url('+topBgDataUrl+')');
-            scrap.style.setProperty('--scrap-bg-size',saRect.width+'px '+saRect.height+'px');
-            scrap.style.setProperty('--scrap-bg-pos','-'+(chRect.left-saRect.left)+'px -'+(chRect.top-saRect.top)+'px');
-        }
-        var rect=collageArea.getBoundingClientRect();
-        scrap.style.left=(Math.random()*(Math.max(rect.width-50,20))+10)+'px';
-        scrap.style.top=(Math.random()*(Math.max(rect.height-60,20))+10)+'px';
-        applyShapeToScrap(scrap);bindDrag(scrap);
-        scrap.ondblclick=function(){var t=textFlow.querySelector('.char-node[data-idx="'+idx+'"]');if(t){t.classList.remove('is-cut','shape-square','shape-clip','shape-symbol','shape-image');t.style.removeProperty('--cut-clip');t.style.removeProperty('--cut-mask');}scrap.remove();};
-        collageArea.appendChild(scrap);
-    }
+    function spawnScrap(charNode,idx){var char=charNode.textContent;var scrap=document.createElement('div');scrap.className='scrap-word';scrap.textContent=char;scrap.dataset.idx=idx;if(topBgDataUrl){var saRect=sourceArea.getBoundingClientRect();var chRect=charNode.getBoundingClientRect();scrap.style.setProperty('--scrap-bg-img','url('+topBgDataUrl+')');scrap.style.setProperty('--scrap-bg-size',saRect.width+'px '+saRect.height+'px');scrap.style.setProperty('--scrap-bg-pos','-'+(chRect.left-saRect.left)+'px -'+(chRect.top-saRect.top)+'px');}var rect=collageArea.getBoundingClientRect();scrap.style.left=(Math.random()*(Math.max(rect.width-50,20))+10)+'px';scrap.style.top=(Math.random()*(Math.max(rect.height-60,20))+10)+'px';applyShapeToScrap(scrap);bindDrag(scrap);scrap.ondblclick=function(){var t=textFlow.querySelector('.char-node[data-idx="'+idx+'"]');if(t){t.classList.remove('is-cut','shape-square','shape-clip','shape-symbol','shape-image');t.style.removeProperty('--cut-clip');t.style.removeProperty('--cut-mask');}scrap.remove();};collageArea.appendChild(scrap);}
     function bindDrag(el){var sX,sY,oX,oY,isDragging=false;var onS=function(e){isDragging=true;var p=e.type.includes('touch')?e.touches[0]:e;sX=p.clientX;sY=p.clientY;oX=parseFloat(el.style.left)||0;oY=parseFloat(el.style.top)||0;el.style.zIndex=1000;};var onM=function(e){if(!isDragging)return;var p=e.type.includes('touch')?e.touches[0]:e;el.style.left=(oX+(p.clientX-sX))+'px';el.style.top=(oY+(p.clientY-sY))+'px';};var onE=function(){isDragging=false;el.style.zIndex=10;};el.addEventListener('mousedown',onS);window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onE);el.addEventListener('touchstart',onS,{passive:true});window.addEventListener('touchmove',onM,{passive:true});window.addEventListener('touchend',onE);}
     function resetCuts(){textFlow.querySelectorAll('.char-node.is-cut').forEach(function(n){n.classList.remove('is-cut','shape-square','shape-clip','shape-symbol','shape-image');n.style.removeProperty('--cut-clip');n.style.removeProperty('--cut-mask');});collageArea.querySelectorAll('.scrap-word').forEach(function(n){n.remove();});}
-
-    var _exportBlobUrls=[];
-    function cleanupExportBlobs(){_exportBlobUrls.forEach(function(u){try{URL.revokeObjectURL(u);}catch(e){}});_exportBlobUrls=[];}
+    var _exportBlobUrls=[];function cleanupExportBlobs(){_exportBlobUrls.forEach(function(u){try{URL.revokeObjectURL(u);}catch(e){}});_exportBlobUrls=[];}
     function injectFontsIntoIframe(idoc){var topF=(root.style.getPropertyValue('--top-font-family')||'').replace(/'/g,''),botF=(root.style.getPropertyValue('--scrap-font-family')||'').replace(/'/g,'');customFonts.forEach(function(f){var fam=f.family.replace(/'/g,'');if(topF.indexOf(fam)===-1&&botF.indexOf(fam)===-1)return;var rule=f.rule,m=rule.match(/url\((data:[^)]+)\)/);if(m){try{var parts=m[1].split(','),mime=(parts[0].match(/:(.*?);/)||[,'application/octet-stream'])[1],bin=atob(parts[1]),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);var blob=new Blob([arr],{type:mime}),blobUrl=URL.createObjectURL(blob);_exportBlobUrls.push(blobUrl);rule=rule.replace(m[0],'url('+blobUrl+')');}catch(e){}}var s=idoc.createElement('style');s.textContent=rule;idoc.head.appendChild(s);});}
     function exportPosterImage(){if(typeof html2canvas==='undefined'){toastr.warning('截图组件加载中');return;}closeAllDrawers();resizer.style.display='none';toastr.info('正在生成高清图片…');var safetyTimer=setTimeout(function(){resizer.style.display='flex';cleanupExportBlobs();toastr.error('生成超时');},25000);setTimeout(function(){var iframe=document.createElement('iframe');iframe.setAttribute('aria-hidden','true');var cardW=Math.max(posterCanvas.offsetWidth||440,280),cardH=Math.max(posterCanvas.offsetHeight||600,300);iframe.style.cssText='position:fixed;left:-99999px;top:0;width:'+(cardW+8)+'px;height:'+(cardH+8)+'px;border:0;visibility:hidden;';document.body.appendChild(iframe);var cleanup=function(){clearTimeout(safetyTimer);try{iframe.remove();}catch(e){}resizer.style.display='flex';cleanupExportBlobs();};try{var idoc=iframe.contentDocument,cs=getComputedStyle(container),varNames=['--top-bg','--bottom-bg','--scrap-bg','--top-cut-color','--top-font-size','--top-font-family','--scrap-font-size','--scrap-font-family','--shared-text-color','--scrap-text-color','--top-grain-opacity','--bottom-grain-opacity','--page-bg','--top-bg-img','--bottom-bg-img','--wm-color'],varStr='';varNames.forEach(function(v){var val=cs.getPropertyValue(v);if(val)varStr+=v+':'+val+';';});idoc.open();idoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="'+FONT_HREF+'"><style>html,body{margin:0;padding:0;}'+CSS_TEXT+'</style></head><body></body></html>');idoc.close();injectFontsIntoIframe(idoc);var wrap=idoc.createElement('div');wrap.id='bp-app-container';wrap.style.cssText='position:static;display:block;width:auto;height:auto;padding:0;background:transparent;overflow:visible;'+varStr;var clone=posterCanvas.cloneNode(true);var rs=clone.querySelector('#collage-resizer');if(rs)rs.remove();wrap.appendChild(clone);idoc.body.appendChild(wrap);var fontReady=(idoc.fonts&&idoc.fonts.ready)?idoc.fonts.ready:Promise.resolve();Promise.race([fontReady,new Promise(function(r){setTimeout(r,3000);})]).then(function(){setTimeout(function(){try{html2canvas(clone,{scale:3,useCORS:true,allowTaint:true,backgroundColor:null,logging:false,windowWidth:clone.scrollWidth,windowHeight:clone.scrollHeight}).then(function(canvas){cleanup();try{var du=canvas.toDataURL('image/png'),lk=document.createElement('a');lk.download='BlackoutPoetry_'+Date.now()+'.png';lk.href=du;document.body.appendChild(lk);lk.click();lk.remove();toastr.success('已保存高清图片');}catch(e){canvas.toBlob(function(blob){var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='BlackoutPoetry_'+Date.now()+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},3000);toastr.success('已保存高清图片');},'image/png');}}).catch(function(err){cleanup();toastr.error('保存失败:'+(err&&err.message||err));});}catch(e){cleanup();toastr.error('截图出错:'+(e&&e.message||e));}},200);});}catch(e){cleanup();toastr.error('截图出错:'+(e&&e.message||e));}},100);}
 
