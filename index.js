@@ -19,7 +19,6 @@ jQuery(async () => {
     var FONT_HREF = 'https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600&display=swap';
     var fl = document.createElement('link'); fl.href = FONT_HREF; fl.rel = 'stylesheet'; document.head.appendChild(fl);
 
-    // ===== IndexedDB =====
     var customFonts = [];
     var BP_DB_NAME = 'bp-blackout-poetry', BP_DB_STORE = 'appdata', BP_DB_VERSION = 1;
     function openBpDB(){ return new Promise(function(res,rej){ var r=indexedDB.open(BP_DB_NAME,BP_DB_VERSION); r.onupgradeneeded=function(e){var db=e.target.result;if(!db.objectStoreNames.contains(BP_DB_STORE))db.createObjectStore(BP_DB_STORE);}; r.onsuccess=function(e){res(e.target.result);}; r.onerror=function(e){rej(e.target.error);}; }); }
@@ -29,15 +28,12 @@ jQuery(async () => {
     function injectCustomFonts(){ var el=document.getElementById('bp-custom-fonts');if(!el){el=document.createElement('style');el.id='bp-custom-fonts';document.head.appendChild(el);}el.textContent=customFonts.map(function(f){return f.rule;}).join('\n'); }
     injectCustomFonts();
 
-    // ===== 持久化 =====
     var BP_BUBBLE_KEY='bp-show-bubble',BP_BUBBLE_POS_KEY='bp-bubble-pos',BP_BUBBLE_IMG_KEY='bp-bubble-img';
     var showBubble=localStorage.getItem(BP_BUBBLE_KEY)!=='false';
     var bubblePos=null;try{bubblePos=JSON.parse(localStorage.getItem(BP_BUBBLE_POS_KEY));}catch(e){}
     var bubbleCustomImg=localStorage.getItem(BP_BUBBLE_IMG_KEY)||'';
 
-    // ===== 形状 =====
     var currentCutShape='default',syncShapeToScrap=false,customSymbol='',customShapeDataUrl=null;
-    // 真正的水滴形 polygon
     var SHAPE_CLIPS={
         'default':'','square':'',
         'circle':'circle(48% at 50% 50%)',
@@ -70,7 +66,6 @@ jQuery(async () => {
     };
 
     var defaultText="我们讨论爱就像讨论牡蛎：盲目，伪装，愚钝，嫉羡，隐于黑暗、不为人道的部分，才是让爱成为爱本身的东西。爱之于你我，就像泥沙之于牡蛎，痛苦忍耐，最后流出几滴眼泪。有人说，咦，原来你有这么多珍珠呀。";
-    // 壁纸 dataURL（上传后存这里，字块抠字时读取）
     var topBgDataUrl='';
 
     var CSS_TEXT=`
@@ -81,14 +76,14 @@ jQuery(async () => {
     --scrap-font-size:13px;--bottom-grain-opacity:0;--scrap-font-family:'Noto Serif SC',serif;
     --shared-text-color:#1A1A1A;--scrap-text-color:#1A1A1A;--wm-color:#999999;
     position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:var(--page-bg);
-    z-index:999999;display:none;justify-content:center;align-items:center;overflow:auto;
-    padding:20px;padding-top:calc(env(safe-area-inset-top,20px) + 56px);
+    z-index:999999;display:none;flex-direction:column;align-items:center;overflow-y:auto;
+    padding:20px;padding-top:calc(env(safe-area-inset-top,20px) + 16px);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 }
 #bp-app-container,#bp-app-container *,#bp-app-container *::before,#bp-app-container *::after{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none;}
 #bp-app-container input[type="file"],#bp-app-container input[type="color"],#bp-app-container input[type="text"],#bp-app-container input[type="checkbox"],#bp-app-container input[type="range"],#bp-app-container select,#bp-app-container textarea{user-select:auto!important;-webkit-user-select:auto!important;pointer-events:auto!important;-webkit-tap-highlight-color:transparent;}
-#bp-app-container #bp-toolbar{position:fixed;top:calc(env(safe-area-inset-top,0px)+8px);left:0;width:100%;display:flex;justify-content:space-between;padding:0 14px;z-index:2005;pointer-events:none;}
-#bp-app-container #bp-toolbar>div{display:flex;align-items:center;gap:6px;pointer-events:auto;}
+#bp-app-container #bp-toolbar{display:flex;justify-content:space-between;padding:0 14px;margin-bottom:12px;width:100%;max-width:440px;}
+#bp-app-container #bp-toolbar>div{display:flex;align-items:center;gap:6px;}
 #bp-app-container .icon-btn{width:34px;height:34px;display:flex;justify-content:center;align-items:center;cursor:pointer;background:rgba(255,255,255,0.92);border:1px solid rgba(0,0,0,0.08);border-radius:4px;backdrop-filter:blur(8px);box-shadow:0 4px 15px rgba(0,0,0,0.04);transition:all 0.2s ease;}
 #bp-app-container .icon-btn:hover{background:#FFF;border-color:#000;}
 #bp-app-container .icon-btn svg{width:16px;height:16px;stroke:#1C1C1C;stroke-width:1.6;fill:none;}
@@ -127,7 +122,7 @@ jQuery(async () => {
 #bp-app-container .setting-field{margin-bottom:12px;}
 #bp-app-container .setting-input{width:100%;background:#F7F7F7;border:1px solid #E5E5E5;padding:6px 8px;font-size:11px;border-radius:2px;outline:none;color:#111;}
 #bp-app-container .setting-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-#bp-app-container #poster-canvas{box-shadow:0 12px 45px rgba(0,0,0,0.08);position:relative;display:flex;flex-direction:column;border:1px solid rgba(0,0,0,0.06);touch-action:none;width:440px;}
+#bp-app-container #poster-canvas{box-shadow:0 12px 45px rgba(0,0,0,0.08);position:relative;display:flex;flex-direction:column;border:1px solid rgba(0,0,0,0.06);touch-action:none;width:440px;flex-shrink:0;}
 #bp-app-container #poster-canvas.layout-horizontal{flex-direction:row!important;width:auto!important;}
 #bp-app-container #source-area{background-color:var(--top-bg);background-image:var(--top-bg-img);background-size:cover;background-position:center;padding:40px 36px 30px 36px;position:relative;flex-shrink:0;height:auto;font-family:var(--top-font-family);}
 #bp-app-container #poster-canvas.layout-horizontal #source-area{width:360px;}
@@ -193,7 +188,6 @@ jQuery(async () => {
 
     var cssFontMask=document.createElement('div');cssFontMask.id='bp-cssfont-mask';cssFontMask.innerHTML='<div id="bp-cssfont-box"><div style="font-size:14px;font-weight:600;margin-bottom:10px;color:#222;">粘贴字体CSS</div><div style="font-size:11px;color:#888;margin-bottom:8px;">从字体网站复制@import和font-family</div><input type="text" id="bp-cssfont-name" placeholder="字体名称" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #ddd;border-radius:6px;margin-bottom:8px;font-size:13px;"><textarea id="bp-cssfont-css" placeholder="@import url(...);\nfont-family:...;" style="width:100%;box-sizing:border-box;height:120px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:monospace;"></textarea><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="action-chip" id="bp-cssfont-cancel" style="padding:8px 16px;">取消</button><button class="action-chip" id="bp-cssfont-save" style="padding:8px 16px;background:#1C1C1C;color:#fff;">导入</button></div></div>';document.body.appendChild(cssFontMask);cssFontMask.addEventListener('click',function(e){if(e.target===cssFontMask)cssFontMask.style.display='none';});
 
-    // ===== 可拖动悬浮气泡 =====
     var bubbleBtn=document.createElement('div');bubbleBtn.id='bp-bubble-btn';
     function renderBubbleContent(){if(bubbleCustomImg)bubbleBtn.innerHTML='<img class="bp-bubble-img" src="'+bubbleCustomImg+'">';else bubbleBtn.innerHTML='&#x1FAE7;';}
     renderBubbleContent();bubbleBtn.style.display=showBubble?'flex':'none';
@@ -208,7 +202,6 @@ jQuery(async () => {
     document.getElementById('toggle-bubble-cb').checked=showBubble;
     if(bubbleCustomImg)document.getElementById('bubble-icon-preview').style.display='block';
 
-    // ===== 默认打开：按指定顺序抠"我→爱→你" =====
     window.openBpApp=function(text){
         container.style.display='flex';
         renderArticle(text||defaultText);
@@ -217,16 +210,17 @@ jQuery(async () => {
             if(!text){
                 collageArea.style.height='120px';
                 setTimeout(function(){
-                    // 按指定顺序：先找"我"，再找"爱"，最后找"你"
                     var targets=['我','爱','你'];
+                    var allNodes=Array.from(textFlow.querySelectorAll('.char-node'));
+                    var picked=[];
                     targets.forEach(function(ch){
-                        var nodes=textFlow.querySelectorAll('.char-node');
-                        for(var i=0;i<nodes.length;i++){
-                            if(nodes[i].textContent===ch&&!nodes[i].classList.contains('is-cut')){
-                                nodes[i].click();break;
+                        for(var i=allNodes.length-1;i>=0;i--){
+                            if(allNodes[i].textContent===ch&&!allNodes[i].classList.contains('is-cut')&&picked.indexOf(i)===-1){
+                                picked.push(i);break;
                             }
                         }
                     });
+                    picked.forEach(function(idx){allNodes[idx].click();});
                     setTimeout(function(){arrangeStrictGrid(1);},150);
                 },100);
             }
@@ -246,14 +240,12 @@ jQuery(async () => {
     function renderShapePanel(){var panel=document.getElementById('shape-panel'),shapes=['default','square','circle','star5','star4','star8','raindrop','puzzle','symbol','image'],labels=['默认','方形','圆形','五角星','四芒星','八芒星','雨滴','拼图','符号','导入'],html='<div class="shape-grid">';shapes.forEach(function(s,i){html+='<div class="shape-item '+(currentCutShape===s?'active':'')+'" data-shape="'+s+'">'+SHAPE_SVGS[s]+'<div class="shape-label">'+labels[i]+'</div></div>';});html+='</div><div class="shape-extra"><div class="setting-toggle-row"><span>字块同步形状</span><input type="checkbox" id="sync-shape-cb" '+(syncShapeToScrap?'checked':'')+' style="accent-color:#000;"></div>';html+='<div id="symbol-input-row" style="'+(currentCutShape==='symbol'?'':'display:none;')+'margin-top:6px;"><input type="text" class="setting-input" id="shape-symbol-input" placeholder="输入符号" value="'+(customSymbol||'')+'" maxlength="2" style="text-align:center;font-size:14px;"></div>';html+='<div id="image-input-row" style="'+(currentCutShape==='image'?'':'display:none;')+'margin-top:6px;"><label class="action-chip file-label" style="font-size:9px;">上传图案<input type="file" accept="image/*" onchange="uploadShapeImage(event)"></label></div></div>';panel.innerHTML=html;panel.querySelectorAll('.shape-item').forEach(function(el){el.addEventListener('click',function(){currentCutShape=el.getAttribute('data-shape');applyShapeToAll();renderShapePanel();});});var sc=panel.querySelector('#sync-shape-cb');if(sc)sc.addEventListener('change',function(){syncShapeToScrap=this.checked;applyShapeToAll();});var si=panel.querySelector('#shape-symbol-input');if(si)si.addEventListener('input',function(){customSymbol=this.value;applyShapeToAll();});}
     function toggleShapePanel(){var p=document.getElementById('shape-panel'),l=document.getElementById('layout-panel');if(p.classList.contains('open'))p.classList.remove('open');else{l.classList.remove('open');renderShapePanel();p.classList.add('open');}}
 
-    // ===== 形状应用（clip只裁背景::before，文字完整） =====
     function getShapeType(s){if(s==='default'||s==='square')return s;if(s==='symbol')return'symbol';if(s==='image')return'image';return'clip';}
     function applyShapeToCut(el){el.classList.remove('shape-square','shape-clip','shape-symbol','shape-image');el.removeAttribute('data-symbol');el.style.removeProperty('--cut-clip');el.style.removeProperty('--cut-mask');var t=getShapeType(currentCutShape);if(t==='square')el.classList.add('shape-square');else if(t==='clip'){el.classList.add('shape-clip');el.style.setProperty('--cut-clip',getClipForShape(currentCutShape));}else if(t==='symbol'){el.classList.add('shape-symbol');el.setAttribute('data-symbol',customSymbol||'x');}else if(t==='image'&&customShapeDataUrl){el.classList.add('shape-image');el.style.setProperty('--cut-mask','url('+customShapeDataUrl+')');}}
     function applyShapeToScrap(el){el.classList.remove('shape-square','shape-clip');el.style.removeProperty('--scrap-clip');if(!syncShapeToScrap)return;var t=getShapeType(currentCutShape);if(t==='square')el.classList.add('shape-square');else if(t==='clip'){el.classList.add('shape-clip');el.style.setProperty('--scrap-clip',getClipForShape(currentCutShape));}}
     function applyShapeToAll(){document.querySelectorAll('#bp-app-container .char-node.is-cut').forEach(applyShapeToCut);document.querySelectorAll('#bp-app-container .scrap-word:not(.bp-welcome-scrap)').forEach(applyShapeToScrap);}
     function uploadShapeImage(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){customShapeDataUrl=ev.target.result;applyShapeToAll();toastr.success('图案已加载');};r.readAsDataURL(f);}
 
-    // ===== 字体 =====
     function getFollowFont(){var m=document.querySelector('.mes_text')||document.querySelector('#chat')||document.body;try{return getComputedStyle(m).fontFamily||'serif';}catch(e){return'serif';}}
     function renderFontLists(){['top','bottom'].forEach(function(z){var c=document.getElementById(z==='top'?'topFontList':'bottomFontList');if(!c)return;c.innerHTML='';var f0=document.createElement('div');f0.className='font-compact-item selected';f0.innerHTML='<div class="font-name-col">跟随酒馆</div>';f0.onclick=function(){setZoneFont(z,'FOLLOW',this,'跟随酒馆');};c.appendChild(f0);customFonts.forEach(function(f){var it=document.createElement('div');it.className='font-compact-item';it.innerHTML='<div class="font-name-col" style="font-family:'+f.family+';">'+f.name+'</div>';it.onclick=function(){setZoneFont(z,f.family,this,f.name);};c.appendChild(it);});});}
     function loadCustomFont(e){var f=e.target.files[0];if(!f)return;var cn=f.name.replace(/\.[^/.]+$/,"").substring(0,10);var r=new FileReader();r.onload=function(ev){var id='BPFont'+Date.now(),du=ev.target.result,rule="@font-face{font-family:'"+id+"';src:url("+du+");}";customFonts.push({id:id,name:cn,family:"'"+id+"'",rule:rule});saveCustomFontsToStorage();injectCustomFonts();renderFontLists();toastr.success('字体['+cn+']已导入');};r.readAsDataURL(f);}
@@ -261,7 +253,6 @@ jQuery(async () => {
     cssFontMask.querySelector('#bp-cssfont-cancel').onclick=function(){cssFontMask.style.display='none';};
     cssFontMask.querySelector('#bp-cssfont-save').onclick=function(){var n=cssFontMask.querySelector('#bp-cssfont-name').value.trim()||'自定义字体',ci=cssFontMask.querySelector('#bp-cssfont-css').value.trim();if(!ci){toastr.error('CSS不能为空');return;}var il='',im=ci.match(/@import[^;]+;/g);if(im)il=im.join('\n');var m=ci.match(/font-family\s*:\s*([^;}\n]+)/),fm=m?m[1].trim():'sans-serif';if(!il){toastr.error('没找到@import');return;}var id='BPFontCss'+Date.now();customFonts.push({id:id,name:n,family:fm,rule:il});saveCustomFontsToStorage();injectCustomFonts();renderFontLists();cssFontMask.style.display='none';toastr.success('字体['+n+']已导入');};
 
-    // ===== 工具函数 =====
     function getGanZhiDate(d){var tG=["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"],dZ=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"],y=d.getFullYear(),o=(y-4)%60;return tG[o%10]+dZ[o%12]+'年 '+tG[d.getMonth()%10]+dZ[(d.getMonth()+2)%12]+'月 '+tG[d.getDate()%10]+dZ[(d.getDate()+4)%12]+'日';}
     function setTimeFormat(m){currentTimeMode=m;document.getElementById('btn-time-solar').classList.toggle('active',m==='solar');document.getElementById('btn-time-lunar').classList.toggle('active',m==='lunar');updateBottomMeta();}
     function updateBottomMeta(){var st=document.getElementById('toggle-time-cb').checked,ts=document.getElementById('bottom-time-span');if(st){ts.style.display='inline';var now=new Date();ts.innerText=currentTimeMode==='solar'?now.getFullYear()+'.'+(now.getMonth()+1)+'.'+now.getDate():getGanZhiDate(now);}else ts.style.display='none';var sw=document.getElementById('toggle-watermark-cb').checked,ws=document.getElementById('bottom-wm-span');ws.style.display=sw?'inline':'none';ws.innerText=document.getElementById('watermark-text-input').value.trim();}
@@ -270,22 +261,15 @@ jQuery(async () => {
     function closeAllDrawers(){drawer.classList.remove('open');settingsDrawer.classList.remove('open');commonMask.classList.remove('visible');document.getElementById('shape-panel').classList.remove('open');document.getElementById('layout-panel').classList.remove('open');}
     function initColorPaletteUI(id,cb){var c=document.getElementById(id);c.innerHTML='';[{label:'浅色系',list:colorCategories.light},{label:'复古色系',list:colorCategories.vintage},{label:'深色系',list:colorCategories.dark}].forEach(function(sec){var lbl=document.createElement('div');lbl.className='color-group-label';lbl.innerText=sec.label;c.appendChild(lbl);var row=document.createElement('div');row.className='color-palette-row';sec.list.forEach(function(cl){var btn=document.createElement('button');btn.className='color-dot';btn.style.backgroundColor=cl.bg;btn.title=cl.name;btn.onclick=function(){cb(cl.bg);};row.appendChild(btn);});c.appendChild(row);});}
     function initTextColorPaletteUI(){var c=document.getElementById('textColorPaletteContainer');var row=document.createElement('div');row.className='color-palette-row';['#1A1A1A','#FFFFFF','#666666','#A0A0A0','#6B2D2B','#334839','#203A4C','#6B442A','#C99E5C','#D9CBB7','#E5EADF','#EFE5E3'].forEach(function(col){var btn=document.createElement('button');btn.className='color-dot';btn.style.backgroundColor=col;btn.onclick=function(){setTextColor(col);};row.appendChild(btn);});c.appendChild(row);}
-
-    // ===== 排列 =====
     function arrangeStrictGrid(tL){var sc=Array.from(collageArea.querySelectorAll('.scrap-word:not(.bp-welcome-scrap)')),ct=sc.length;if(!ct)return;var rect=collageArea.getBoundingClientRect();sc.sort(function(a,b){var ay=parseFloat(a.style.top)||0,by=parseFloat(b.style.top)||0,ax=parseFloat(a.style.left)||0,bx=parseFloat(b.style.left)||0;if(Math.abs(ay-by)<30)return ax-bx;return ay-by;});var first=sc[0],cW=first.offsetWidth||28,cH=first.offsetHeight||28,gX=8,gY=10;var sX=0,sY=0;sc.forEach(function(s){sX+=parseFloat(s.style.left)||0;sY+=parseFloat(s.style.top)||0;});var cX=sX/ct+cW/2,cY=sY/ct+cH/2,aL=Math.min(tL,ct),bs=Math.floor(ct/aL),rm=ct%aL,mC=bs+(rm>0?1:0),mW=mC*cW+(mC-1)*gX,mH=aL*cH+(aL-1)*gY,oX=Math.max(10,Math.min(rect.width-mW-10,cX-mW/2)),oY=Math.max(10,Math.min(rect.height-mH-35,cY-mH/2)),ci=0;for(var l=0;l<aL;l++){var it=bs+(l<rm?1:0),lW=it*cW+(it-1)*gX,lX=oX+(mW-lW)/2,lY=oY+l*(cH+gY);for(var c=0;c<it;c++){var s=sc[ci];if(!s)break;s.style.transition='all 0.32s cubic-bezier(0.2,0.9,0.3,1)';s.style.transform='rotate(0deg)';s.style.opacity='1';s.style.left=(lX+c*(cW+gX))+'px';s.style.top=lY+'px';ci++;}}setTimeout(function(){sc.forEach(function(s){s.style.transition='';});},350);}
-
-    // ===== 背景/颜色 =====
     function calculateCutColor(hex){var rgb=parseInt(hex.replace('#',''),16);var r=(rgb>>16)&0xff,g=(rgb>>8)&0xff,b=rgb&0xff;return(0.2126*r+0.7152*g+0.0722*b)>140?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.15)';}
     function setTopBg(c){sourceArea.style.backgroundImage='none';root.style.setProperty('--top-bg',c);root.style.setProperty('--scrap-bg',c);root.style.setProperty('--top-cut-color',calculateCutColor(c));topBgDataUrl='';}
     function setTopCustomBg(v){setTopBg(v);}
     function setBottomBg(c){collageArea.style.backgroundImage='none';root.style.setProperty('--bottom-bg',c);}
     function setBottomCustomBg(v){setBottomBg(v);}
     function setTextColor(c){root.style.setProperty('--shared-text-color',c);root.style.setProperty('--scrap-text-color',c);document.getElementById('textColorPicker').value=c.startsWith('#')?c:'#1a1a1a';}
-
-    // ===== 壁纸上传（记录 dataURL 供字块背景用） =====
     function uploadTopBg(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){topBgDataUrl=ev.target.result;sourceArea.style.backgroundImage='url('+topBgDataUrl+')';root.style.setProperty('--top-cut-color',calculateCutColor('#888888'));};r.readAsDataURL(f);}
     function uploadBottomBg(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){collageArea.style.backgroundImage='url('+ev.target.result+')';};r.readAsDataURL(f);}
-
     function applyTextureEffect(lid,type){var layer=document.getElementById(lid);var map={none:['none','none'],frosted:['url(#tex-frosted-filter)','#888'],noise:['url(#tex-noise-filter)','#888'],paper:['url(#tex-paper-filter)','#DDD'],fabric:['url(#tex-fabric-filter)','#888'],scratch:['url(#tex-scratch-filter)','#888']};var p=map[type]||map.none;layer.style.filter=p[0];layer.style.background=p[1];}
     function setTopTexture(t){document.querySelectorAll('[id^="top-tex-"]').forEach(function(b){b.classList.remove('active');});document.getElementById('top-tex-'+t).classList.add('active');applyTextureEffect('top-texture',t);if(t!=='none'&&document.getElementById('top-grain-slider').value==0){document.getElementById('top-grain-slider').value=30;setTopGrainOpacity(30);}}
     function setTopGrainOpacity(v){root.style.setProperty('--top-grain-opacity',v/100);}
@@ -297,24 +281,17 @@ jQuery(async () => {
     function syncCollageSize(){if(currentLayout==='vertical'){collageArea.style.width='100%';collageArea.style.height=sourceArea.offsetHeight+'px';}else{collageArea.style.height=sourceArea.offsetHeight+'px';collageArea.style.width=sourceArea.offsetWidth+'px';}}
     function switchLayout(t){currentLayout=t;if(t==='horizontal'){posterCanvas.classList.add('layout-horizontal');collageArea.style.height=sourceArea.offsetHeight+'px';collageArea.style.width='340px';}else{posterCanvas.classList.remove('layout-horizontal');collageArea.style.width='100%';collageArea.style.height=sourceArea.offsetHeight+'px';}renderLayoutPanel();}
     function initCollageResizer(){var isR=false,sX,sY,sW,sH;var onS=function(e){isR=true;var p=e.type.includes('touch')?e.touches[0]:e;sX=p.clientX;sY=p.clientY;sW=collageArea.offsetWidth;sH=collageArea.offsetHeight;e.stopPropagation();};var onM=function(e){if(!isR)return;var p=e.type.includes('touch')?e.touches[0]:e;if(currentLayout==='vertical')collageArea.style.height=Math.max(80,sH+(p.clientY-sY))+'px';else{collageArea.style.width=Math.max(140,sW+(p.clientX-sX))+'px';collageArea.style.height=sourceArea.offsetHeight+'px';}};var onE=function(){isR=false;};resizer.addEventListener('mousedown',onS);window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onE);resizer.addEventListener('touchstart',onS,{passive:true});window.addEventListener('touchmove',onM,{passive:true});window.addEventListener('touchend',onE);}
-
-    // ===== 文章渲染/抠字（壁纸背景传递） =====
     function renderArticle(text){textFlow.innerHTML='';collageArea.querySelectorAll('.scrap-word').forEach(function(e){e.remove();});text.split('').forEach(function(char,idx){var span=document.createElement('span');span.className='char-node';span.textContent=char;span.dataset.char=char;span.dataset.idx=idx;span.onclick=function(){handleCharClick(span);};textFlow.appendChild(span);});setTimeout(function(){if(currentLayout==='horizontal')collageArea.style.height=sourceArea.offsetHeight+'px';},30);}
     function handleCharClick(span){var idx=span.dataset.idx;if(span.classList.contains('is-cut')){span.classList.remove('is-cut','shape-square','shape-clip','shape-symbol','shape-image');span.style.removeProperty('--cut-clip');span.style.removeProperty('--cut-mask');var sc=collageArea.querySelector('.scrap-word[data-idx="'+idx+'"]');if(sc)sc.remove();return;}collageArea.querySelectorAll('.bp-welcome-scrap').forEach(function(e){e.remove();});span.classList.add('is-cut');applyShapeToCut(span);spawnScrap(span,idx);}
-
-    // 关键：抠字时记录壁纸坐标，传给字块背景
     function spawnScrap(charNode,idx){
         var char=charNode.textContent;
         var scrap=document.createElement('div');scrap.className='scrap-word';scrap.textContent=char;scrap.dataset.idx=idx;
-        // 如果有壁纸，把字在原文区的位置对应的那片壁纸贴到字块背景上
         if(topBgDataUrl){
             var saRect=sourceArea.getBoundingClientRect();
             var chRect=charNode.getBoundingClientRect();
-            var offX=chRect.left-saRect.left;
-            var offY=chRect.top-saRect.top;
             scrap.style.setProperty('--scrap-bg-img','url('+topBgDataUrl+')');
             scrap.style.setProperty('--scrap-bg-size',saRect.width+'px '+saRect.height+'px');
-            scrap.style.setProperty('--scrap-bg-pos','-'+offX+'px -'+offY+'px');
+            scrap.style.setProperty('--scrap-bg-pos','-'+(chRect.left-saRect.left)+'px -'+(chRect.top-saRect.top)+'px');
         }
         var rect=collageArea.getBoundingClientRect();
         scrap.style.left=(Math.random()*(Math.max(rect.width-50,20))+10)+'px';
@@ -323,11 +300,9 @@ jQuery(async () => {
         scrap.ondblclick=function(){var t=textFlow.querySelector('.char-node[data-idx="'+idx+'"]');if(t){t.classList.remove('is-cut','shape-square','shape-clip','shape-symbol','shape-image');t.style.removeProperty('--cut-clip');t.style.removeProperty('--cut-mask');}scrap.remove();};
         collageArea.appendChild(scrap);
     }
-
     function bindDrag(el){var sX,sY,oX,oY,isDragging=false;var onS=function(e){isDragging=true;var p=e.type.includes('touch')?e.touches[0]:e;sX=p.clientX;sY=p.clientY;oX=parseFloat(el.style.left)||0;oY=parseFloat(el.style.top)||0;el.style.zIndex=1000;};var onM=function(e){if(!isDragging)return;var p=e.type.includes('touch')?e.touches[0]:e;el.style.left=(oX+(p.clientX-sX))+'px';el.style.top=(oY+(p.clientY-sY))+'px';};var onE=function(){isDragging=false;el.style.zIndex=10;};el.addEventListener('mousedown',onS);window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onE);el.addEventListener('touchstart',onS,{passive:true});window.addEventListener('touchmove',onM,{passive:true});window.addEventListener('touchend',onE);}
     function resetCuts(){textFlow.querySelectorAll('.char-node.is-cut').forEach(function(n){n.classList.remove('is-cut','shape-square','shape-clip','shape-symbol','shape-image');n.style.removeProperty('--cut-clip');n.style.removeProperty('--cut-mask');});collageArea.querySelectorAll('.scrap-word').forEach(function(n){n.remove();});}
 
-    // ===== 导出 =====
     var _exportBlobUrls=[];
     function cleanupExportBlobs(){_exportBlobUrls.forEach(function(u){try{URL.revokeObjectURL(u);}catch(e){}});_exportBlobUrls=[];}
     function injectFontsIntoIframe(idoc){var topF=(root.style.getPropertyValue('--top-font-family')||'').replace(/'/g,''),botF=(root.style.getPropertyValue('--scrap-font-family')||'').replace(/'/g,'');customFonts.forEach(function(f){var fam=f.family.replace(/'/g,'');if(topF.indexOf(fam)===-1&&botF.indexOf(fam)===-1)return;var rule=f.rule,m=rule.match(/url\((data:[^)]+)\)/);if(m){try{var parts=m[1].split(','),mime=(parts[0].match(/:(.*?);/)||[,'application/octet-stream'])[1],bin=atob(parts[1]),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);var blob=new Blob([arr],{type:mime}),blobUrl=URL.createObjectURL(blob);_exportBlobUrls.push(blobUrl);rule=rule.replace(m[0],'url('+blobUrl+')');}catch(e){}}var s=idoc.createElement('style');s.textContent=rule;idoc.head.appendChild(s);});}
